@@ -1,0 +1,15 @@
+{ "name":			"ssdp"
+, "description":	"A node.js SSDP client and server library."
+, "keywords":		[ "ssdp", "multicast", "media", "device", "upnp" ]
+, "version":		"0.0.1"
+, "author":			"Nicholas Libby <Xedecimal@gmail.com>"
+, "maintainer": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>"
+, "repository":		{ "type":  "git"
+					, "url":   "git@github.com:diversario/node-ssdp.git" }
+, "bugs":			{ "url":   "https://github.com/diversario/node-ssdp/issues" }
+, "os":				[ "linux"
+					, "windows"
+					, "mac" ]
+, "main":			"./ssdp"
+, "engines":		{ "node": ">=0.6.11" }
+}
