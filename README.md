@@ -1,10 +1,10 @@
 ## Usage - Client
 
-	```javascript
-	var SSDP = require('ssdp').SSDP;
-	var client = new SSDP;
-	
-	client.on('notify', function () {
+```javascript
+    var SSDP = require('ssdp').SSDP;
+    var client = new SSDP;
+    
+    client.on('notify', function () {
 		console.log('Got a notification.');
 	});
 	
@@ -19,11 +19,11 @@
 	ssdp.search('ssdp:all');
 	
 	// This should get you at least started.
-
+```
 
 ## Usage - Server
 
-	```javascript
+```javascript
 	var SSDP = require('ssdp').SSDP;
 	
 	var server = new SSDP;
@@ -45,7 +45,7 @@
 	require('dns').lookup(require('os').hostname(), function (err, add) {
 		server.server(add);
 	};
-
+```
 
 ## Author
 
