@@ -1,6 +1,6 @@
-var SSDP = require('../');
-
-var server = new SSDP();
+var SSDP = require('../')
+  , server = new SSDP()
+;
 
 server.addUSN('upnp:rootdevice');
 server.addUSN('urn:schemas-upnp-org:device:MediaServer:1');

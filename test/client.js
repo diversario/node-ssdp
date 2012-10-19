@@ -13,4 +13,4 @@ client.search('urn:schemas-upnp-org:service:ContentDirectory:1');
 
 // Or maybe if you want to scour for everything
 
-//client.search('ssdp:all');
+client.search('ssdp:all');
