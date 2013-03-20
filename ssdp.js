@@ -1,5 +1,7 @@
-var dgram = require('dgram');
-var execFile = require('child_process').execFile;
+'use strict';
+
+var dgram = require('dgram')
+  , execFile = require('child_process').execFile;
 
 var events = require('events');
 var util = require('util');
