@@ -7,9 +7,6 @@
 , "repository":		{ "type":  "git"
 					, "url":   "git@github.com:diversario/node-ssdp.git" }
 , "bugs":			{ "url":   "https://github.com/diversario/node-ssdp/issues" }
-, "os":				[ "linux"
-					, "windows"
-					, "mac" ]
 , "main":			"./ssdp"
 , "engines":		{ "node": ">=0.6.11" }
 }
