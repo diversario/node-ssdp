@@ -5,13 +5,17 @@ var dgram = require('dgram')
   , util = require('util')
 ;
 
-var SSDP_SIG = 'Microsoft-Windows-NT/5.1 UPnP/1.1 Mediabrary/1.0'
+var SSDP_SIG = 'node.js/0.0.8 UPnP/1.1 node-ssdp/0.0.1'
   , SSDP_IP = '239.255.255.250'
   , SSDP_PORT = 1900
   , SSDP_IPPORT = SSDP_IP + ':' + SSDP_PORT
-  , TTL = 1800;
-
-
+  , TTL = 1800
+  , SSDP_LOGGER = { error   : function(msg, props) { console.log(msg); console.trace(props.exception); }
+                  , warning : function(msg, props) { console.log(msg); if (props) console.log(props);  }
+                  , notice  : function(msg, props) { console.log(msg); if (props) console.log(props);  }
+                  , info    : function(msg, props) { console.log(msg); if (props) console.log(props);  }
+                  }
+  ;
 
 function SSDP() {
   var self = this;
@@ -20,15 +24,19 @@ function SSDP() {
 
   EE.call(self);
 
+  self.logger = SSDP_LOGGER;
+  self.description = 'upnp/desc.php';
+
   self.usns = {};
   self.udn = 'uuid:e3f28962-f694-471f-8f74-c6abd507594b';
 
   // Configure socket for either client or server.
+  self.listening = false;
+  self.responses = {};
   self.sock = dgram.createSocket('udp4');
 
   self.sock.on('error', function (err) {
-    console.log('############### Got an error!');
-    console.trace(err);
+    self.logger.error('ssdp', { event: 'socket', diagnostic: 'error', exception: err });
   });
 
   self.sock.on('message', function onMessage(msg, rinfo) {
@@ -37,9 +45,10 @@ function SSDP() {
 
   self.sock.on('listening', function onListening() {
     var addr = self.sock.address();
-    console.log('SSDP Listening on ' + addr.address + ':' + addr.port);
+    self.listening = 'http://' + addr.address + ':' + addr.port;
+    self.logger.notice('SSDP listening on ' + self.listening);
     self.sock.addMembership(SSDP_IP);
-    self.sock.setMulticastTTL(2);
+//    self.sock.setMulticastTTL(2);
   });
 
   process.on('exit', function () {
@@ -65,13 +74,13 @@ SSDP.prototype.inMSearch = function (st, rinfo) {
       var pkt = self.getSSDPHeader('200 OK', {
         ST: usn,
         USN: udn,
-        LOCATION: self.httphost + '/upnp/desc.php',
+        LOCATION: self.httphost + '/' + self.description,
         'CACHE-CONTROL': 'max-age=' + TTL,
         DATE: new Date().toUTCString(),
         SERVER: SSDP_SIG,
         EXT: ''
       }, true);
-      console.log('Sending a 200 OK for an m-search to ' + peer + ':' + port);
+      self.logger.info('Sending a 200 OK for an m-search to ' + peer + ':' + port);
       pkt = new Buffer(pkt);
       self.sock.send(pkt, 0, pkt.length, port, peer);
     }
@@ -103,7 +112,6 @@ SSDP.prototype.parseCommand = function parseCommand(msg, rinfo) {
   var lines = msg.toString().split("\r\n")
     , type = lines.shift().split(' ')
     , method = type[0]
-    , uri = type[1]
     , self = this;
 
   var heads = {};
@@ -125,7 +133,7 @@ SSDP.prototype.parseCommand = function parseCommand(msg, rinfo) {
       else if (heads['NTS'] == 'ssdp:byebye') {
         self.emit('advertise-bye', heads);
       } else {
-        console.log('############### Notify unhandled!');
+        self.logger.warning('NOTIFY unhandled', { msg: msg, rinfo: rinfo });
       }
       break;
     case 'M-SEARCH':
@@ -136,13 +144,17 @@ SSDP.prototype.parseCommand = function parseCommand(msg, rinfo) {
       self.inMSearch(heads['ST'], rinfo);
       break;
     default:
-      console.log("Unknown message: \r\n" + msg);
+      self.logger.warning('NOTIFY unhandled', { msg: msg, rinfo: rinfo });
   }
 };
 
 
 
 SSDP.prototype.parseResponse = function parseResponse(msg, rinfo) {
+  if (!this.responses[rinfo.address]) {
+    this.responses[rinfo.address] = true;
+    this.logger.info('SSDP response', { rinfo: rinfo });
+  }
   this.emit('response', msg, rinfo);
   /*console.log('Parsing a response!');
    console.log(msg.toString());*/
@@ -153,7 +165,7 @@ SSDP.prototype.parseResponse = function parseResponse(msg, rinfo) {
 SSDP.prototype.search = function search(st) {
   var self = this;
 
-  require('dns').lookup(require('os').hostname(), function (err, add) {
+  require('dns').lookup(require('os').hostname(), function (err, add) {/* jshint unused: false */
     //self.sock.bind(0, add);
 
     var pkt = self.getSSDPHeader('M-SEARCH', {
@@ -163,19 +175,19 @@ SSDP.prototype.search = function search(st) {
       'MX': 3
     });
     pkt = new Buffer(pkt);
-    console.log('@138', pkt.toString());
+//    console.log('@138', pkt.toString());
     self.sock.send(pkt, 0, pkt.length, SSDP_PORT, SSDP_IP);
   });
 };
 
 
 
-SSDP.prototype.server = function (ip) {
+SSDP.prototype.server = function (ip, portno) {
   var self = this;
 
-  this.httphost = 'http://' + ip + ':10293';
+  this.httphost = 'http://'+ip+':'+((!!portno) ? portno : '10293');
   this.usns[this.udn] = this.udn;
-  this.sock.bind(SSDP_PORT, ip);
+  if (!this.listening) this.sock.bind(SSDP_PORT, ip);
 
   // Shut down.
   this.advertise(false);
@@ -220,7 +232,7 @@ SSDP.prototype.advertise = function (alive) {
     };
 
     if (alive) {
-      heads['LOCATION'] = self.httphost + '/upnp/desc.php';
+      heads['LOCATION'] = self.httphost + '/' + self.description;
       heads['CACHE-CONTROL'] = 'max-age=1800';
       heads['SERVER'] = SSDP_SIG;
     }
@@ -235,7 +247,7 @@ SSDP.prototype.advertise = function (alive) {
 SSDP.prototype.getSSDPHeader = function (head, vars, res) {
   var ret = '';
 
-  if (res == null) res = false;
+  if (res === null) res = false;
 
   if (res) {
     ret = "HTTP/1.1 " + head + "\r\n";
