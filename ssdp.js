@@ -46,7 +46,7 @@ function SSDP() {
   self.sock.on('listening', function onListening() {
     var addr = self.sock.address();
     self.listening = 'http://' + addr.address + ':' + addr.port;
-    self.logger.notice('SSDP listening on ' + self.listening);
+    self.logger.info('SSDP listening on ' + self.listening);
     self.sock.addMembership(SSDP_IP);
 //    self.sock.setMulticastTTL(2);
   });
