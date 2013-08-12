@@ -7,6 +7,24 @@ var dgram = require('dgram')
 
 
 
+/**
+ * Options:
+ * 
+ * @param {Object} opts
+ * @param {String} opts.ssdpSig SSDP signature
+ * @param {String} opts.ssdpIp SSDP multicast group
+ * @param {String} opts.ssdpPort SSDP port
+ * @param {Number} opts.ssdpTtl Multicast TTL
+ * @param {String} opts.description Path to SSDP description file
+ * @param {String} opts.udn SSDP Unique Device Name
+ * 
+ * @param {Number} opts.ttl Packet TTL
+ * @param {Boolean} opts.log Disable/enable logging
+ * @param {String} opts.logLevel Log level
+ * 
+ * @returns {SSDP}
+ * @constructor
+ */
 function SSDP(opts) {
   var self = this
 
@@ -78,8 +96,8 @@ SSDP.prototype.start = function () {
 
 SSDP.prototype.inMSearch = function (st, rinfo) {
   var self = this
-    , peer = rinfo['address']
-    , port = rinfo['port']
+    , peer = rinfo.address
+    , port = rinfo.port
 
   if (st[0] == '"') st = st.slice(1, -1)
 
@@ -199,7 +217,7 @@ SSDP.prototype.search = function search(st) {
 SSDP.prototype.server = function (ip, portno) {
   var self = this
 
-  this.httphost = 'http://'+ip+':'+((!!portno) ? portno : '10293')
+  this.httphost = 'http://' + ip + ':' + (!!portno ? portno : '10293')
   this.usns[this.udn] = this.udn
   
   if (!this.listening) this.sock.bind(this._ssdpPort, ip)
@@ -237,7 +255,6 @@ SSDP.prototype.advertise = function (alive) {
 
   Object.keys(self.usns).forEach(function (usn) {
     var udn = self.usns[usn]
-      , out = 'NOTIFY * HTTP/1.1\r\n'
 
     var heads = {
       HOST: self._ipPort,
@@ -252,7 +269,7 @@ SSDP.prototype.advertise = function (alive) {
       heads['SERVER'] = self._ssdpSig
     }
 
-    out = new Buffer(self.getSSDPHeader('NOTIFY', heads))
+    var out = new Buffer(self.getSSDPHeader('NOTIFY', heads))
     self.sock.send(out, 0, out.length, self._ssdpPort, self._ssdpIp)
   })
 }
