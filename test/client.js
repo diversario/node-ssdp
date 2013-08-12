@@ -1,5 +1,5 @@
 var ssdp = require('../')
-  , client = new ssdp();
+  , client = new ssdp({logLevel: 'TRACE'});
 
 client.on('notify', function () {
   console.log('Got a notification.');

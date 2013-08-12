@@ -1,5 +1,5 @@
 var SSDP = require('../')
-  , server = new SSDP()
+  , server = new SSDP({logLevel: 'TRACE'})
 ;
 
 server.addUSN('upnp:rootdevice');
