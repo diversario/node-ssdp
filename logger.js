@@ -6,22 +6,25 @@ process.stdout.setMaxListeners(100)
 module.exports = function(config) {
   if (!config) config = {}
   
-  var prettyStdOut = new PrettyStream()
-  prettyStdOut.pipe(process.stdout)
-
-  var logger = bunyan.createLogger({
+  var loggerConfig = {
     name: 'ssdp',
-    streams: [{
+    streams: []
+  }
+  
+  if (config.log !== false) {
+    var prettyStdOut = new PrettyStream()
+    prettyStdOut.pipe(process.stdout)
+    
+    loggerConfig.streams.push({
       level: 'error',
       type: 'raw',
       stream: prettyStdOut
-    }]
-  })
+    })
+  }
+  
+  var logger = bunyan.createLogger(loggerConfig)
 
   config.logLevel && logger.level(config.logLevel)
-
-  // don't log when running tests
-  if (process.env.NODE_ENV == 'test') logger.level('FATAL')
 
   return logger
 }
