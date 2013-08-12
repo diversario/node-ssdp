@@ -11,7 +11,7 @@ module.exports = function(config) {
     streams: []
   }
   
-  if (config.log !== false) {
+  if (config.log === true) {
     var prettyStdOut = new PrettyStream()
     prettyStdOut.pipe(process.stdout)
     

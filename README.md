@@ -51,9 +51,15 @@
 ##Configuration
 SSDP constructor accepts an optional configuration object. At the moment, the following is supported:
 
+- `log` _Boolean_ Enable/disable logging. Default: false.
 - `logLevel` _String_ Specifies log level to print. Possible values: `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`. Defaults to `ERROR`.
+- `ssdpSig` _String_ SSDP signature. Default: 'node.js/0.0.8 UPnP/1.1 node-ssdp/0.1.1'
+- `ssdpIp` _String_ SSDP multicast group. Default: '239.255.255.250'
+- `ssdpPort` _Number_ SSDP port. Default: 1900
+- `ssdpTtl` _Number_ Multicast TTL. Default: 1
 - `udn` _String_ Unique Device Name. Defaults to "uuid:e3f28962-f694-471f-8f74-c6abd507594b".
 - `description` _String_ Path to description file. Defaults to "upnp/desc.php".
+- `ttl` _Number_ Packet TTL. Default: 1800.
 
 ## Author
 

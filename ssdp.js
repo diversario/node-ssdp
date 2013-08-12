@@ -38,7 +38,7 @@ function SSDP(opts) {
   this.start()
 
   process.on('exit', function () {
-    self.close()
+    self.stop()
   })
 }
 
@@ -48,7 +48,7 @@ util.inherits(SSDP, EE)
 
 
 SSDP.prototype.init = function (opts) {
-  this._ssdpSig = opts.ssdpSig || 'node.js/0.0.8 UPnP/1.1 node-ssdp/0.0.1'
+  this._ssdpSig = opts.ssdpSig || 'node.js/0.0.8 UPnP/1.1 node-ssdp/0.1.1'
 
   this._ssdpIp = opts.ssdpIp || '239.255.255.250'
   this._ssdpPort = opts.ssdpPort || 1900
@@ -239,7 +239,7 @@ SSDP.prototype.server = function (ip, portno) {
 
 
 
-SSDP.prototype.close = function () {
+SSDP.prototype.stop = function () {
   this.advertise(false)
   this.advertise(false)
   this.sock.close()
