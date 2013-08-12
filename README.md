@@ -48,6 +48,13 @@
     });
 ```
 
+##Configuration
+SSDP constructor accepts an optional configuration object. At the moment, the following is supported:
+
+- `logLevel` _String_ Specifies log level to print. Possible values: `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`. Defaults to `ERROR`.
+- `udn` _String_ Unique Device Name. Defaults to "uuid:e3f28962-f694-471f-8f74-c6abd507594b".
+- `description` _String_ Path to description file. Defaults to "upnp/desc.php".
+
 ## Author
 
 Initial commit of this module is a clone of https://bitbucket.org/Xedecimal/node-ssdp, commit 0c6cd0a (2012-03-21).

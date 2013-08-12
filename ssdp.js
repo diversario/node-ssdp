@@ -3,6 +3,7 @@
 var dgram = require('dgram')
   , EE = require('events').EventEmitter
   , util = require('util')
+  , Logger = require('./logger')
 ;
 
 var SSDP_SIG = 'node.js/0.0.8 UPnP/1.1 node-ssdp/0.0.1'
@@ -10,25 +11,22 @@ var SSDP_SIG = 'node.js/0.0.8 UPnP/1.1 node-ssdp/0.0.1'
   , SSDP_PORT = 1900
   , SSDP_IPPORT = SSDP_IP + ':' + SSDP_PORT
   , TTL = 1800
-  , SSDP_LOGGER = { error   : function(msg, props) { console.log(msg); console.trace(props.exception); }
-                  , warning : function(msg, props) { console.log(msg); if (props) console.log(props);  }
-                  , notice  : function(msg, props) { console.log(msg); if (props) console.log(props);  }
-                  , info    : function(msg, props) { console.log(msg); if (props) console.log(props);  }
-                  }
-  ;
+;
 
-function SSDP() {
+function SSDP(opts) {
   var self = this;
 
-  if (!(this instanceof SSDP)) return new SSDP();
+  if (!(this instanceof SSDP)) return new SSDP(opts);
 
+  opts = opts || {};
+  
   EE.call(self);
 
-  self.logger = SSDP_LOGGER;
-  self.description = 'upnp/desc.php';
+  self.logger = Logger(opts);
+  self.description = opts.description || 'upnp/desc.php';
 
   self.usns = {};
-  self.udn = 'uuid:e3f28962-f694-471f-8f74-c6abd507594b';
+  self.udn = opts.udn || 'uuid:e3f28962-f694-471f-8f74-c6abd507594b';
 
   // Configure socket for either client or server.
   self.listening = false;
@@ -133,7 +131,7 @@ SSDP.prototype.parseCommand = function parseCommand(msg, rinfo) {
       else if (heads['NTS'] == 'ssdp:byebye') {
         self.emit('advertise-bye', heads);
       } else {
-        self.logger.warning('NOTIFY unhandled', { msg: msg, rinfo: rinfo });
+        self.logger.warn('NOTIFY unhandled', { msg: msg, rinfo: rinfo });
       }
       break;
     case 'M-SEARCH':
@@ -144,7 +142,7 @@ SSDP.prototype.parseCommand = function parseCommand(msg, rinfo) {
       self.inMSearch(heads['ST'], rinfo);
       break;
     default:
-      self.logger.warning('NOTIFY unhandled', { msg: msg, rinfo: rinfo });
+      self.logger.warn('NOTIFY unhandled', { msg: msg, rinfo: rinfo });
   }
 };
 
