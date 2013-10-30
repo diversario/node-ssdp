@@ -154,7 +154,7 @@ SSDP.prototype.parseCommand = function parseCommand(msg, rinfo) {
   lines.forEach(function (line) {
     if (line.length) {
       var vv = line.match(/^([^:]+):\s*(.*)$/)
-      heads[vv[1].toUpperCase()] = vv[2]
+      if (vv) heads[vv[1].toUpperCase()] = vv[2]
     }
   })
 
