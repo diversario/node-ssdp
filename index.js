@@ -87,7 +87,7 @@ SSDP.prototype.start = function () {
   })
 
   this.sock.on('message', function onMessage(msg, rinfo) {
-    self.parseMessage(msg, rinfo)
+    self._parseMessage(msg, rinfo)
   })
 
   this.sock.on('listening', function onListening() {
@@ -108,7 +108,7 @@ SSDP.prototype.start = function () {
  * @param msg
  * @param rinfo
  */
-SSDP.prototype.parseMessage = function (msg, rinfo) {
+SSDP.prototype._parseMessage = function (msg, rinfo) {
   msg = msg.toString()
 
   this.logger.trace({message: '\n' + msg}, 'Multicast message')
@@ -117,9 +117,9 @@ SSDP.prototype.parseMessage = function (msg, rinfo) {
 
   // HTTP/#.# ### Response
   if (httpHeader.test(type)) {
-    this.parseResponse(msg, rinfo)
+    this._parseResponse(msg, rinfo)
   } else {
-    this.parseCommand(msg, rinfo)
+    this._parseCommand(msg, rinfo)
   }
 }
 
@@ -130,11 +130,10 @@ SSDP.prototype.parseMessage = function (msg, rinfo) {
  * @param msg
  * @param rinfo
  */
-SSDP.prototype.parseCommand = function parseCommand(msg, rinfo) {
+SSDP.prototype._parseCommand = function parseCommand(msg, rinfo) {
   var lines = msg.toString().split("\r\n")
     , type = lines.shift().split(' ')// command, such as "NOTIFY * HTTP/1.1"
     , method = type[0]
-    , self = this
 
   var headers = {}
 
@@ -147,13 +146,13 @@ SSDP.prototype.parseCommand = function parseCommand(msg, rinfo) {
 
   switch (method) {
     case 'NOTIFY':
-      self.notify(headers, msg, rinfo)
+      this._notify(headers, msg, rinfo)
       break
     case 'M-SEARCH':
-      self.msearch(headers, msg, rinfo)
+      this.msearch(headers, msg, rinfo)
       break
     default:
-      self.logger.warn({'msg': msg, 'rinfo': rinfo}, 'NOTIFY unhandled')
+      this.logger.warn({'message': '\n' + msg, 'rinfo': rinfo}, 'Unhandled NOTIFY event')
   }
 }
 
@@ -166,26 +165,24 @@ SSDP.prototype.parseCommand = function parseCommand(msg, rinfo) {
  * @param msg
  * @param rinfo
  */
-SSDP.prototype.notify = function (headers, msg, rinfo) {
-  var self = this
-
+SSDP.prototype._notify = function (headers, msg, rinfo) {
   if (!headers.NTS) {
-    this.logger.warn(headers, 'Missing NTS header')
+    this.logger.trace(headers, 'Missing NTS header')
   }
 
   switch (headers.NTS.toLowerCase()) {
     // Device coming to life.
     case 'ssdp:alive':
-      self.emit('advertise-alive', headers)
+      this.emit('advertise-alive', headers)
       break
 
     // Device shutting down.
     case 'ssdp:byebye':
-      self.emit('advertise-bye', headers)
+      this.emit('advertise-bye', headers)
       break
 
     default:
-      self.logger.warn('NOTIFY unhandled', { msg: msg, rinfo: rinfo })
+      this.logger.trace({'message': '\n' + msg, 'rinfo': rinfo}, 'Unhandled NOTIFY event')
   }
 }
 
@@ -199,7 +196,7 @@ SSDP.prototype.notify = function (headers, msg, rinfo) {
  * @param rinfo
  */
 SSDP.prototype.msearch = function (headers, msg, rinfo) {
-  this.logger.trace('SSDP M-SEARCH: for (' + headers['ST'] + ') from (' + rinfo['address'] + ':' + rinfo['port'] + ')')
+  this.logger.trace({'ST': headers.ST, 'address': rinfo['address'], 'port': rinfo['port']}, 'SSDP M-SEARCH event')
 
   if (!headers['MAN'] || !headers['MX'] || !headers['ST']) return
 
@@ -207,10 +204,17 @@ SSDP.prototype.msearch = function (headers, msg, rinfo) {
 }
 
 
-SSDP.prototype.parseResponse = function parseResponse(msg, rinfo) {
+
+/**
+ * Parses SSDP response message.
+ * 
+ * @param msg
+ * @param rinfo
+ */
+SSDP.prototype._parseResponse = function parseResponse(msg, rinfo) {
   if (!this.responses[rinfo.address]) {
     this.responses[rinfo.address] = true
-    this.logger.info('SSDP response', { rinfo: rinfo })
+    this.logger.info({'message': '\n' + msg}, 'SSDP response')
   }
 
   this.emit('response', msg, rinfo)
@@ -223,7 +227,7 @@ SSDP.prototype.inMSearch = function (st, rinfo) {
     , peer = rinfo.address
     , port = rinfo.port
 
-  if (st[0] == '"') st = st.slice(1, -1)
+  if (st[0] == '"') st = st.slice(1, -1) // unwrap quoted string
 
   Object.keys(self.usns).forEach(function (usn) {
     var udn = self.usns[usn]
@@ -239,7 +243,7 @@ SSDP.prototype.inMSearch = function (st, rinfo) {
         'EXT': ''
       }, true)
       
-      self.logger.info('Sending a 200 OK for an m-search to ' + peer + ':' + port)
+      self.logger.info({'peer': peer, 'port': port}, 'Sending a 200 OK for an M-SEARCH')
       pkt = new Buffer(pkt)
       self.sock.send(pkt, 0, pkt.length, port, peer)
     }
@@ -346,7 +350,7 @@ SSDP.prototype.advertise = function (alive) {
 
     var out = new Buffer(self.getSSDPHeader('NOTIFY', heads))
     self.sock.send(out, 0, out.length, self._ssdpPort, self._ssdpIp, function (err, bytes) {
-      self.logger.trace(out.toString(), 'Server sent a message')
+      self.logger.trace({'message': out.toString()}, 'Outgoing server message')
     })
   })
 }
