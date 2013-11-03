@@ -48,7 +48,7 @@ util.inherits(SSDP, EE)
 
 
 SSDP.prototype.init = function (opts) {
-  this._ssdpSig = opts.ssdpSig || 'node.js/0.0.8 UPnP/1.1 node-ssdp/0.1.1'
+  this._ssdpSig = opts.ssdpSig || getSsdpSignature()
 
   this._ssdpIp = opts.ssdpIp || '239.255.255.250'
   this._ssdpPort = opts.ssdpPort || 1900
@@ -59,10 +59,10 @@ SSDP.prototype.init = function (opts) {
   this._ttl = opts.ttl || 1800
 
   this.logger = Logger(opts)
-  this.description = opts.description || 'upnp/desc.php'
+  this.description = opts.description || 'upnp/desc.html'
 
   this.usns = {}
-  this.udn = opts.udn || 'uuid:e3f28962-f694-471f-8f74-c6abd507594b'
+  this.udn = opts.udn || 'uuid:f40c2981-7329-40b7-8b04-27f187aecfb5'
 }
 
 
@@ -81,13 +81,16 @@ SSDP.prototype.start = function () {
   })
 
   this.sock.on('message', function onMessage(msg, rinfo) {
+    self.logger.trace(msg.toString(), rinfo, 'Received a message')
     self.parseMessage(msg, rinfo)
   })
 
   this.sock.on('listening', function onListening() {
     var addr = self.sock.address()
+    
     self.listening = 'http://' + addr.address + ':' + addr.port
     self.logger.info('SSDP listening on ' + self.listening)
+
     self.sock.addMembership(self._ssdpIp)
     self.sock.setMulticastTTL(self._ssdpTtl)
   })
@@ -134,7 +137,7 @@ SSDP.prototype.parseMessage = function (msg, rinfo) {
   var type = msg.toString().split('\r\n').shift()
 
   // HTTP/#.# ### Response
-  if (type.match(/HTTP\/(\d{1})\.(\d{1}) (\d+) (.*)/)) {
+  if (/HTTP\/(\d{1})\.(\d{1}) (\d+) (.*)/.test(type)) {
     this.parseResponse(msg, rinfo)
   } else {
     this.parseCommand(msg, rinfo)
@@ -172,14 +175,14 @@ SSDP.prototype.parseCommand = function parseCommand(msg, rinfo) {
       }
       break
     case 'M-SEARCH':
-      console.log('SSDP M-SEARCH: for (' + heads['ST'] + ') from (' + rinfo['address'] + ':' + rinfo['port'] + ')')
+      self.logger.trace('SSDP M-SEARCH: for (' + heads['ST'] + ') from (' + rinfo['address'] + ':' + rinfo['port'] + ')')
       if (!heads['MAN']) return
       if (!heads['MX']) return
       if (!heads['ST']) return
       self.inMSearch(heads['ST'], rinfo)
       break
     default:
-      self.logger.warn('NOTIFY unhandled', { msg: msg, rinfo: rinfo })
+      self.logger.warn({ msg: msg, rinfo: rinfo}, 'NOTIFY unhandled')
   }
 }
 
@@ -208,33 +211,53 @@ SSDP.prototype.search = function search(st) {
     })
     pkt = new Buffer(pkt)
 
-    self.sock.send(pkt, 0, pkt.length, self._ssdpPort, self._ssdpIp)
+    self.sock.send(pkt, 0, pkt.length, self._ssdpPort, self._ssdpIp, function (err, bytes) {
+      self.logger.trace('Client sent ' + bytes)
+    })
   })
 }
 
 
 
+/**
+ * Binds UDP socket to an interface/port
+ * and starts advertising.
+ * 
+ * @param ip
+ * @param portno
+ */
 SSDP.prototype.server = function (ip, portno) {
   var self = this
 
+  if (self._clientMode) {
+    var e = new Error('Cannot use client as a server')
+    self.logger.error(e)
+    throw e
+  }
+  
   this.httphost = 'http://' + ip + ':' + (!!portno ? portno : '10293')
   this.usns[this.udn] = this.udn
   
-  if (!this.listening) this.sock.bind(this._ssdpPort, ip)
-
-  // Shut down.
-  this.advertise(false)
-
-  setTimeout(function () {
+  this.logger.trace('Will try to bind to ' + ip + ':' + this._ssdpPort)
+  
+  self.sock.bind(this._ssdpPort, ip, function () {
+    var addr = self.sock.address()
+    self.listening = 'http://' + addr.address + ':' + addr.port
+    self.logger.info('SSDP listening on ' + self.listening)
+    
     self.advertise(false)
-  }, 1000)
 
-  // Wake up.
-  setTimeout(self.advertise, 2000)
-  setTimeout(self.advertise, 3000)
+    setTimeout(function () {
+      self.advertise(false)
+    }, 1000)
 
-  // Ad loop.
-  setInterval(self.advertise, 10000)
+    // Wake up.
+    setTimeout(self.advertise.bind(self), 2000)
+    setTimeout(self.advertise.bind(self), 3000)
+
+    // Ad loop.
+    setInterval(self.advertise.bind(self), 10000)
+  })
 }
 
 
@@ -270,7 +293,9 @@ SSDP.prototype.advertise = function (alive) {
     }
 
     var out = new Buffer(self.getSSDPHeader('NOTIFY', heads))
-    self.sock.send(out, 0, out.length, self._ssdpPort, self._ssdpIp)
+    self.sock.send(out, 0, out.length, self._ssdpPort, self._ssdpIp, function (err, bytes) {
+      self.logger.trace(out.toString(), 'Server sent a message')
+    })
   })
 }
 
@@ -294,6 +319,14 @@ SSDP.prototype.getSSDPHeader = function (head, vars, res) {
   return ret + "\r\n"
 }
 
+
+function getSsdpSignature() {
+  var nodeVersion = process.version.substr(1)
+    , moduleVersion = require('./package.json').version
+    , moduleName = require('./package.json').name
+
+  return 'node.js/' + nodeVersion + ' UPnP/1.1 ' + moduleName + '/' + moduleVersion 
+}
 
 
 module.exports = SSDP

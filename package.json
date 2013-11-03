@@ -8,7 +8,7 @@
     "device",
     "upnp"
   ],
-  "version" : "0.1.1",
+  "version" : "0.2.0",
   "author" : "Nicholas Libby <Xedecimal@gmail.com>",
   "maintainer" : "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
@@ -22,7 +22,7 @@
   "bugs" : {
     "url" : "https://github.com/diversario/node-ssdp/issues"
   },
-  "main" : "./ssdp",
+  "main" : "./index",
   "engines" : {
     "node" : ">=0.6.11"
   }
