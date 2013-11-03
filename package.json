@@ -1,29 +1,29 @@
 {
-  "name" : "node-ssdp",
-  "description" : "A node.js SSDP client and server library.",
-  "keywords" : [
+  "name": "node-ssdp",
+  "description": "A node.js SSDP client and server library.",
+  "keywords": [
     "ssdp",
     "multicast",
     "media",
     "device",
     "upnp"
   ],
-  "version" : "0.2.0",
-  "author" : "Nicholas Libby <Xedecimal@gmail.com>",
-  "maintainer" : "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
+  "version": "0.2.0",
+  "author": "Nicholas Libby <Xedecimal@gmail.com>",
+  "maintainer": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
-    "bunyan": "~0.21",
-    "bunyan-prettystream": "0.1.3"
+    "bunyan-prettystream": "~0.1.3",
+    "bunyan": "~0.22.0"
   },
-  "repository" : {
-    "type" : "git",
-    "url" : "git@github.com:diversario/node-ssdp.git"
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:diversario/node-ssdp.git"
   },
-  "bugs" : {
-    "url" : "https://github.com/diversario/node-ssdp/issues"
+  "bugs": {
+    "url": "https://github.com/diversario/node-ssdp/issues"
   },
-  "main" : "./index",
-  "engines" : {
-    "node" : ">=0.6.11"
+  "main": "./index",
+  "engines": {
+    "node": ">=0.10.0"
   }
 }

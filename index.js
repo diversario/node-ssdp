@@ -6,6 +6,8 @@ var dgram = require('dgram')
   , Logger = require('./logger')
 
 
+var httpHeader = /HTTP\/\d{1}\.\d{1} \d+ .*/
+  , ssdpHeader = /^([^:]+):\s*(.*)$/
 
 /**
  * Options:
@@ -67,34 +69,153 @@ SSDP.prototype.init = function (opts) {
 
 
 
+/**
+ * Creates and configures a UDP socket.
+ * Binds event listeners.
+ * 
+ */
 SSDP.prototype.start = function () {
   var self = this
 
   // Configure socket for either client or server.
-  self.listening = false
   self.responses = {}
 
   this.sock = dgram.createSocket('udp4')
 
   this.sock.on('error', function (err) {
-    self.logger.error('ssdp', { event: 'socket', diagnostic: 'error', exception: err })
+    self.logger.error(err, 'Socker error')
   })
 
   this.sock.on('message', function onMessage(msg, rinfo) {
-    self.logger.trace(msg.toString(), rinfo, 'Received a message')
     self.parseMessage(msg, rinfo)
   })
 
   this.sock.on('listening', function onListening() {
     var addr = self.sock.address()
     
-    self.listening = 'http://' + addr.address + ':' + addr.port
-    self.logger.info('SSDP listening on ' + self.listening)
+    self.logger.info('SSDP listening on ' + 'http://' + addr.address + ':' + addr.port)
 
     self.sock.addMembership(self._ssdpIp)
     self.sock.setMulticastTTL(self._ssdpTtl)
   })
 }
+
+
+
+/**
+ * Routes a network message to the appropriate handler.
+ * 
+ * @param msg
+ * @param rinfo
+ */
+SSDP.prototype.parseMessage = function (msg, rinfo) {
+  msg = msg.toString()
+
+  this.logger.trace({message: '\n' + msg}, 'Multicast message')
+
+  var type = msg.split('\r\n').shift()
+
+  // HTTP/#.# ### Response
+  if (httpHeader.test(type)) {
+    this.parseResponse(msg, rinfo)
+  } else {
+    this.parseCommand(msg, rinfo)
+  }
+}
+
+
+/**
+ * Parses SSDP command.
+ *
+ * @param msg
+ * @param rinfo
+ */
+SSDP.prototype.parseCommand = function parseCommand(msg, rinfo) {
+  var lines = msg.toString().split("\r\n")
+    , type = lines.shift().split(' ')// command, such as "NOTIFY * HTTP/1.1"
+    , method = type[0]
+    , self = this
+
+  var headers = {}
+
+  lines.forEach(function (line) {
+    if (line.length) {
+      var pairs = line.match(ssdpHeader)
+      if (pairs) headers[pairs[1].toUpperCase()] = pairs[2] // e.g. {'HOST': 239.255.255.250:1900}
+    }
+  })
+
+  switch (method) {
+    case 'NOTIFY':
+      self.notify(headers, msg, rinfo)
+      break
+    case 'M-SEARCH':
+      self.msearch(headers, msg, rinfo)
+      break
+    default:
+      self.logger.warn({'msg': msg, 'rinfo': rinfo}, 'NOTIFY unhandled')
+  }
+}
+
+
+
+/**
+ * Handles NOTIFY command
+ *
+ * @param headers
+ * @param msg
+ * @param rinfo
+ */
+SSDP.prototype.notify = function (headers, msg, rinfo) {
+  var self = this
+
+  if (!headers.NTS) {
+    this.logger.warn(headers, 'Missing NTS header')
+  }
+
+  switch (headers.NTS.toLowerCase()) {
+    // Device coming to life.
+    case 'ssdp:alive':
+      self.emit('advertise-alive', headers)
+      break
+
+    // Device shutting down.
+    case 'ssdp:byebye':
+      self.emit('advertise-bye', headers)
+      break
+
+    default:
+      self.logger.warn('NOTIFY unhandled', { msg: msg, rinfo: rinfo })
+  }
+}
+
+
+
+/**
+ * Handles M-SEARCH command.
+ *
+ * @param headers
+ * @param msg
+ * @param rinfo
+ */
+SSDP.prototype.msearch = function (headers, msg, rinfo) {
+  this.logger.trace('SSDP M-SEARCH: for (' + headers['ST'] + ') from (' + rinfo['address'] + ':' + rinfo['port'] + ')')
+
+  if (!headers['MAN'] || !headers['MX'] || !headers['ST']) return
+
+  this.inMSearch(headers['ST'], rinfo)
+}
+
+
+SSDP.prototype.parseResponse = function parseResponse(msg, rinfo) {
+  if (!this.responses[rinfo.address]) {
+    this.responses[rinfo.address] = true
+    this.logger.info('SSDP response', { rinfo: rinfo })
+  }
+
+  this.emit('response', msg, rinfo)
+}
+
 
 
 SSDP.prototype.inMSearch = function (st, rinfo) {
@@ -109,13 +230,13 @@ SSDP.prototype.inMSearch = function (st, rinfo) {
 
     if (st == 'ssdp:all' || usn == st) {
       var pkt = self.getSSDPHeader('200 OK', {
-        ST: usn,
-        USN: udn,
-        LOCATION: self.httphost + '/' + self.description,
+        'ST': usn,
+        'USN': udn,
+        'LOCATION': self.httphost + '/' + self.description,
         'CACHE-CONTROL': 'max-age=' + self._ttl,
-        DATE: new Date().toUTCString(),
-        SERVER: self._ssdpSig,
-        EXT: ''
+        'DATE': new Date().toUTCString(),
+        'SERVER': self._ssdpSig,
+        'EXT': ''
       }, true)
       
       self.logger.info('Sending a 200 OK for an m-search to ' + peer + ':' + port)
@@ -130,73 +251,6 @@ SSDP.prototype.inMSearch = function (st, rinfo) {
 SSDP.prototype.addUSN = function (device) {
   this.usns[device] = this.udn + '::' + device
 }
-
-
-
-SSDP.prototype.parseMessage = function (msg, rinfo) {
-  var type = msg.toString().split('\r\n').shift()
-
-  // HTTP/#.# ### Response
-  if (/HTTP\/(\d{1})\.(\d{1}) (\d+) (.*)/.test(type)) {
-    this.parseResponse(msg, rinfo)
-  } else {
-    this.parseCommand(msg, rinfo)
-  }
-}
-
-
-
-SSDP.prototype.parseCommand = function parseCommand(msg, rinfo) {
-  var lines = msg.toString().split("\r\n")
-    , type = lines.shift().split(' ')
-    , method = type[0]
-    , self = this
-
-  var heads = {}
-
-  lines.forEach(function (line) {
-    if (line.length) {
-      var vv = line.match(/^([^:]+):\s*(.*)$/)
-      if (vv) heads[vv[1].toUpperCase()] = vv[2]
-    }
-  })
-
-  switch (method) {
-    case 'NOTIFY':
-      // Device coming to life.
-      if (heads['NTS'] == 'ssdp:alive') {
-        self.emit('advertise-alive', heads)
-      }
-      // Device shutting down.
-      else if (heads['NTS'] == 'ssdp:byebye') {
-        self.emit('advertise-bye', heads)
-      } else {
-        self.logger.warn('NOTIFY unhandled', { msg: msg, rinfo: rinfo })
-      }
-      break
-    case 'M-SEARCH':
-      self.logger.trace('SSDP M-SEARCH: for (' + heads['ST'] + ') from (' + rinfo['address'] + ':' + rinfo['port'] + ')')
-      if (!heads['MAN']) return
-      if (!heads['MX']) return
-      if (!heads['ST']) return
-      self.inMSearch(heads['ST'], rinfo)
-      break
-    default:
-      self.logger.warn({ msg: msg, rinfo: rinfo}, 'NOTIFY unhandled')
-  }
-}
-
-
-
-SSDP.prototype.parseResponse = function parseResponse(msg, rinfo) {
-  if (!this.responses[rinfo.address]) {
-    this.responses[rinfo.address] = true
-    this.logger.info('SSDP response', { rinfo: rinfo })
-  }
-  
-  this.emit('response', msg, rinfo)
-}
-
 
 
 SSDP.prototype.search = function search(st) {
@@ -241,9 +295,7 @@ SSDP.prototype.server = function (ip, portno) {
   this.logger.trace('Will try to bind to ' + ip + ':' + this._ssdpPort)
   
   self.sock.bind(this._ssdpPort, ip, function () {
-    var addr = self.sock.address()
-    self.listening = 'http://' + addr.address + ':' + addr.port
-    self.logger.info('SSDP listening on ' + self.listening)
+    self.logger.info('UDP socket bound to ' + ip + ':' + self._ssdpPort)
     
     self.advertise(false)
 

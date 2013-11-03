@@ -8,7 +8,8 @@ module.exports = function(config) {
   
   var loggerConfig = {
     name: 'ssdp',
-    streams: []
+    streams: [],
+    src: true
   }
   
   if (config.log === true) {
