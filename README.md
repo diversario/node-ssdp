@@ -1,3 +1,11 @@
+## Installation
+
+```sh
+npm install node-ssdp
+```
+
+There is another package called `ssdp` which is the original unmaintained version. Make sure to install `node-ssdp` instead.
+
 ## Usage - Client
 
 ```javascript
