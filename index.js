@@ -13,7 +13,7 @@ var httpHeader = /HTTP\/\d{1}\.\d{1} \d+ .*/
 
 /**
  * Options:
- * 
+ *
  * @param {Object} opts
  * @param {String} opts.ssdpSig SSDP signature
  * @param {String} opts.ssdpIp SSDP multicast group
@@ -21,11 +21,11 @@ var httpHeader = /HTTP\/\d{1}\.\d{1} \d+ .*/
  * @param {Number} opts.ssdpTtl Multicast TTL
  * @param {String} opts.description Path to SSDP description file
  * @param {String} opts.udn SSDP Unique Device Name
- * 
+ *
  * @param {Number} opts.ttl Packet TTL
  * @param {Boolean} opts.log Disable/enable logging
  * @param {String} opts.logLevel Log level
- * 
+ *
  * @returns {SSDP}
  * @constructor
  */
@@ -35,11 +35,11 @@ function SSDP(opts) {
   if (!(this instanceof SSDP)) return new SSDP(opts)
 
   opts = opts || {}
-  
+
   EE.call(self)
 
   this._logger = Logger(opts)
-  
+
   this._init(opts)
   this._start()
 
@@ -80,7 +80,7 @@ SSDP.prototype._init = function (opts) {
 /**
  * Creates and configures a UDP socket.
  * Binds event listeners.
- * 
+ *
  */
 SSDP.prototype._start = function () {
   var self = this
@@ -100,7 +100,7 @@ SSDP.prototype._start = function () {
 
   this.sock.on('listening', function onListening() {
     var addr = self.sock.address()
-    
+
     self._logger.info('SSDP listening on ' + 'http://' + addr.address + ':' + addr.port)
 
     self.sock.addMembership(self._ssdpIp)
@@ -112,7 +112,7 @@ SSDP.prototype._start = function () {
 
 /**
  * Routes a network message to the appropriate handler.
- * 
+ *
  * @param msg
  * @param rinfo
  */
@@ -213,7 +213,7 @@ SSDP.prototype._msearch = function (headers, msg, rinfo) {
 
 /**
  * Parses SSDP response message.
- * 
+ *
  * @param msg
  * @param rinfo
  */
@@ -240,25 +240,25 @@ SSDP.prototype._inMSearch = function (st, rinfo) {
 
     if (st == 'ssdp:all' || usn == st) {
       var pkt = self.getSSDPHeader(
-        '200 OK',
-        {
-          'ST': usn,
-          'USN': udn,
-          'LOCATION': self._httphost + '/' + self._description,
-          'CACHE-CONTROL': 'max-age=' + self._ttl,
-          'DATE': new Date().toUTCString(),
-          'SERVER': self._ssdpSig,
-          'EXT': ''
-        },
-        true
+	'200 OK',
+	{
+	  'ST': usn,
+	  'USN': udn,
+	  'LOCATION': self._httphost + '/' + self._description,
+	  'CACHE-CONTROL': 'max-age=' + self._ttl,
+	  'DATE': new Date().toUTCString(),
+	  'SERVER': self._ssdpSig,
+	  'EXT': ''
+	},
+	true
       )
-      
+
       self._logger.trace({'peer': peer, 'port': port}, 'Sending a 200 OK for an M-SEARCH')
-      
+
       var message = new Buffer(pkt)
-      
+
       self.sock.send(message, 0, message.length, port, peer, function (err, bytes) {
-        self._logger.trace({'message': pkt}, 'Sent M-SEARCH response')
+	self._logger.trace({'message': pkt}, 'Sent M-SEARCH response')
       })
     }
   })
@@ -278,15 +278,15 @@ SSDP.prototype.search = function search(st) {
     var pkt = self.getSSDPHeader(
       'M-SEARCH',
       {
-        'HOST': self._ipPort,
-        'ST': st,
-        'MAN': '"ssdp:discover"',
-        'MX': 3
+	'HOST': self._ipPort,
+	'ST': st,
+	'MAN': '"ssdp:discover"',
+	'MX': 3
       }
     )
 
     self._logger.trace('Sending an M-SEARCH request')
-    
+
     var message = new Buffer(pkt)
 
     self.sock.send(message, 0, message.length, self._ssdpPort, self._ssdpIp, function (err, bytes) {
@@ -300,7 +300,7 @@ SSDP.prototype.search = function search(st) {
 /**
  * Binds UDP socket to an interface/port
  * and starts advertising.
- * 
+ *
  * @param ip
  * @param [portno]
  */
@@ -308,14 +308,14 @@ SSDP.prototype.server = function (ip, portno) {
   var self = this
 
   if (!portno) portno = '10293'
-  
+
   this._usns[this._udn] = this._udn
-  
+
   this._logger.trace('Will try to bind to ' + ip + ':' + this._ssdpPort)
 
   if (!ip || ip == '0.0.0.0') {
     dns.lookup(os.hostname(), function (err, add) {
-      self._httphost = 'http://' + add + ':' + portno  
+      self._httphost = 'http://' + add + ':' + portno
       bind()
     })
   } else {
@@ -330,7 +330,7 @@ SSDP.prototype.server = function (ip, portno) {
       self.advertise(false)
 
       setTimeout(function () {
-        self.advertise(false)
+	self.advertise(false)
       }, 1000)
 
       // Wake up.
@@ -346,7 +346,7 @@ SSDP.prototype.server = function (ip, portno) {
 
 
 /**
- * Advertise shutdown and close UDP socket. 
+ * Advertise shutdown and close UDP socket.
  */
 SSDP.prototype.stop = function () {
   this.advertise(false)
@@ -358,7 +358,7 @@ SSDP.prototype.stop = function () {
 
 
 /**
- * 
+ *
  * @param alive
  */
 SSDP.prototype.advertise = function (alive) {
@@ -384,9 +384,9 @@ SSDP.prototype.advertise = function (alive) {
     }
 
     self._logger.trace('Sending an advertisement event')
-    
+
     var out = new Buffer(self.getSSDPHeader('NOTIFY', heads))
-    
+
     self.sock.send(out, 0, out.length, self._ssdpPort, self._ssdpIp, function (err, bytes) {
       self._logger.trace({'message': out.toString()}, 'Outgoing server message')
     })
@@ -419,7 +419,7 @@ function getSsdpSignature() {
     , moduleVersion = require('./package.json').version
     , moduleName = require('./package.json').name
 
-  return 'node.js/' + nodeVersion + ' UPnP/1.1 ' + moduleName + '/' + moduleVersion 
+  return 'node.js/' + nodeVersion + ' UPnP/1.1 ' + moduleName + '/' + moduleVersion
 }
 
 
