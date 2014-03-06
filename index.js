@@ -352,6 +352,7 @@ SSDP.prototype.stop = function () {
   this.advertise(false)
   this.advertise(false)
   this.sock.close()
+  this.sock = null;
 }
 
 
