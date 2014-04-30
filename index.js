@@ -278,10 +278,10 @@ SSDP.prototype.search = function search(st) {
     var pkt = self.getSSDPHeader(
       'M-SEARCH',
       {
-	'HOST': self._ipPort,
-	'ST': st,
-	'MAN': '"ssdp:discover"',
-	'MX': 3
+        'HOST': self._ipPort,
+        'ST': st,
+        'MAN': '"ssdp:discover"',
+        'MX': 3
       }
     )
 
@@ -330,7 +330,7 @@ SSDP.prototype.server = function (ip, portno) {
       self.advertise(false)
 
       setTimeout(function () {
-	self.advertise(false)
+        self.advertise(false)
       }, 1000)
 
       // Wake up.
@@ -352,7 +352,7 @@ SSDP.prototype.stop = function () {
   this.advertise(false)
   this.advertise(false)
   this.sock.close()
-  this.sock = null;
+  this.sock = null
 }
 
 
