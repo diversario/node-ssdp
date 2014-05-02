@@ -43,9 +43,10 @@ function SSDP(opts) {
   this._init(opts)
   this._start()
 
-  process.on('exit', function () {
+  this._stopWrapper=function () {
     self.stop()
-  })
+  }
+  process.on('exit', this._stopWrapper);
 }
 
 
@@ -349,6 +350,8 @@ SSDP.prototype.server = function (ip, portno) {
  * Advertise shutdown and close UDP socket.
  */
 SSDP.prototype.stop = function () {
+  process.removeListener('exit', this._stopWrapper);
+
   this.advertise(false)
   this.advertise(false)
   this.sock.close()
