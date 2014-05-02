@@ -350,7 +350,10 @@ SSDP.prototype.server = function (ip, portno) {
  * Advertise shutdown and close UDP socket.
  */
 SSDP.prototype.stop = function () {
-  process.removeListener('exit', this._stopWrapper);
+  if (this._stopWrapper){
+    process.removeListener('exit', this._stopWrapper);
+    delete this._stopWrapper;
+  }
 
   this.advertise(false)
   this.advertise(false)
