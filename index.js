@@ -2,9 +2,8 @@
 
 var dgram = require('dgram')
   , EE = require('events').EventEmitter
-  , dns = require('dns')
-  , os = require('os')
   , util = require('util')
+  , ip = require('ip')
   , Logger = require('./logger')
 
 
@@ -41,11 +40,8 @@ function SSDP(opts) {
   this._logger = Logger(opts)
 
   this._init(opts)
-  this._start()
 
-  process.on('exit', function () {
-    self.stop()
-  })
+  process.on('exit', self.stop.bind(this))
 }
 
 
@@ -84,6 +80,13 @@ SSDP.prototype._init = function (opts) {
  */
 SSDP.prototype._start = function () {
   var self = this
+
+  if (self._started) {
+    self._logger.warn('Already started.')
+    return
+  }
+
+  self._started = true
 
   // Configure socket for either client or server.
   self.responses = {}
@@ -240,17 +243,17 @@ SSDP.prototype._inMSearch = function (st, rinfo) {
 
     if (st == 'ssdp:all' || usn == st) {
       var pkt = self.getSSDPHeader(
-	'200 OK',
-	{
-	  'ST': usn,
-	  'USN': udn,
-	  'LOCATION': self._httphost + '/' + self._description,
-	  'CACHE-CONTROL': 'max-age=' + self._ttl,
-	  'DATE': new Date().toUTCString(),
-	  'SERVER': self._ssdpSig,
-	  'EXT': ''
-	},
-	true
+        '200 OK',
+        {
+          'ST': usn,
+          'USN': udn,
+          'LOCATION': self._httphost + '/' + self._description,
+          'CACHE-CONTROL': 'max-age=' + self._ttl,
+          'DATE': new Date().toUTCString(),
+          'SERVER': self._ssdpSig,
+          'EXT': ''
+        },
+        true
       )
 
       self._logger.trace({'peer': peer, 'port': port}, 'Sending a 200 OK for an M-SEARCH')
@@ -258,7 +261,7 @@ SSDP.prototype._inMSearch = function (st, rinfo) {
       var message = new Buffer(pkt)
 
       self.sock.send(message, 0, message.length, port, peer, function (err, bytes) {
-	self._logger.trace({'message': pkt}, 'Sent M-SEARCH response')
+        self._logger.trace({'message': pkt}, 'Sent M-SEARCH response')
       })
     }
   })
@@ -289,6 +292,8 @@ SSDP.prototype.search = function search(st) {
 
     var message = new Buffer(pkt)
 
+    if (!self.sock) self._start()
+
     self.sock.send(message, 0, message.length, self._ssdpPort, self._ssdpIp, function (err, bytes) {
       self._logger.trace({'message': pkt}, 'Sent M-SEARCH request')
     })
@@ -301,31 +306,42 @@ SSDP.prototype.search = function search(st) {
  * Binds UDP socket to an interface/port
  * and starts advertising.
  *
- * @param ip
+ * @param ipAddress
  * @param [portno]
  */
-SSDP.prototype.server = function (ip, portno) {
+SSDP.prototype.server = function (ipAddress, portno) {
   var self = this
+
+  if (self._socketBound) {
+    self._logger.warn('Server already running.')
+    return;
+  }
+
+  self._socketBound = true;
 
   if (!portno) portno = '10293'
 
   this._usns[this._udn] = this._udn
 
-  this._logger.trace('Will try to bind to ' + ip + ':' + this._ssdpPort)
-
-  if (!ip || ip == '0.0.0.0') {
-    dns.lookup(os.hostname(), function (err, add) {
-      self._httphost = 'http://' + add + ':' + portno
-      bind()
-    })
+  if (!ipAddress) {
+    var _ip = ip.address()
+    self._httphost = 'http://' + _ip + ':' + portno
   } else {
-    this._httphost = 'http://' + ip + ':' + portno
+    self._httphost = 'http://' + ipAddress + ':' + portno
+  }
+
+  this._logger.trace('Will try to bind to ' + (_ip || ipAddress) + ':' + this._ssdpPort)
+
+  if (self.sock) {
+    bind()
+  } else {
+    self._start()
     bind()
   }
 
   function bind() {
-    self.sock.bind(self._ssdpPort, ip, function () {
-      self._logger.info('UDP socket bound to ' + ip + ':' + self._ssdpPort)
+    self.sock.bind(self._ssdpPort, ipAddress, function () {
+      self._logger.info('UDP socket bound to ' + ipAddress + ':' + self._ssdpPort)
 
       self.advertise(false)
 
@@ -349,10 +365,18 @@ SSDP.prototype.server = function (ip, portno) {
  * Advertise shutdown and close UDP socket.
  */
 SSDP.prototype.stop = function () {
+  if (!this.sock) {
+    this._logger.warn('Already stopped.')
+    return;
+  }
+
   this.advertise(false)
   this.advertise(false)
+
   this.sock.close()
   this.sock = null
+
+  this._socketBound = this._started = false;
 }
 
 

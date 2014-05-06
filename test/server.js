@@ -1,6 +1,6 @@
 var SSDP = require('../')
   , server = new SSDP({logLevel: 'TRACE', log: true})
-;
+  ;
 
 server.addUSN('upnp:rootdevice');
 server.addUSN('urn:schemas-upnp-org:device:MediaServer:1');
