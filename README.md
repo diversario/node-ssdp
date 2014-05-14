@@ -50,6 +50,10 @@ There is another package called `ssdp` which is the original unmaintained versio
     require('dns').lookup(require('os').hostname(), function (err, add) {
       server.start(add);
     });
+
+    process.on('exit', function(){
+      server.stop() // advertise shutting down and stop listening
+    })
 ```
 
 Take a look at `test` directory as well to see examples or client and server.
