@@ -9,48 +9,50 @@ There is another package called `ssdp` which is the original unmaintained versio
 ## Usage - Client
 
 ```javascript
-    var ssdp = require('../')
-      , client = new ssdp();
+    var Client = require('node-ssdp').Client
+      , client = new Client();
 
     client.on('response', function inResponse(msg, rinfo) {
       console.log('Got a response to an m-search.');
     });
-    
+
     client.search('urn:schemas-upnp-org:service:ContentDirectory:1');
-    
+
     // Or maybe if you want to scour for everything
-    
+
     client.search('ssdp:all');
-    
+
     // This should get you at least started.
 ```
 
 ## Usage - Server
 
 ```javascript
-    var SSDP = require('../')
-      , server = new SSDP()
+    var Server = require('node-ssdp').Server
+      , server = new Server()
     ;
-    
+
     server.addUSN('upnp:rootdevice');
     server.addUSN('urn:schemas-upnp-org:device:MediaServer:1');
     server.addUSN('urn:schemas-upnp-org:service:ContentDirectory:1');
     server.addUSN('urn:schemas-upnp-org:service:ConnectionManager:1');
-    
+
     server.on('advertise-alive', function (heads) {
       // Expire old devices from your cache.
       // Register advertising device somewhere (as designated in http headers heads)
     });
-    
+
     server.on('advertise-bye', function (heads) {
       // Remove specified device from cache.
     });
-    
+
     // This should get your local ip to pass off to the server.
     require('dns').lookup(require('os').hostname(), function (err, add) {
-      server.server(add);
+      server.start(add);
     });
 ```
+
+Take a look at `test` directory as well to see examples or client and server.
 
 ##Configuration
 SSDP constructor accepts an optional configuration object. At the moment, the following is supported:
