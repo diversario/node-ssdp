@@ -8,12 +8,13 @@
     "device",
     "upnp"
   ],
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Nicholas Libby <Xedecimal@gmail.com>",
   "maintainer": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
     "bunyan-prettystream": "~0.1.3",
-    "bunyan": "~0.22.0"
+    "bunyan": "~0.22.0",
+    "ip": "^0.3.0"
   },
   "repository": {
     "type": "git",
