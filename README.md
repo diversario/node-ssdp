@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/diversario/node-ssdp.png?label=ready&title=Ready)](https://waffle.io/diversario/node-ssdp)
 ## Installation
 
 ```sh
