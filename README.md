@@ -57,7 +57,7 @@ There is another package called `ssdp` which is the original unmaintained versio
     })
 ```
 
-Take a look at `test` directory as well to see examples or client and server.
+Take a look at `example` directory as well to see examples or client and server.
 
 ##Configuration
 SSDP constructor accepts an optional configuration object. At the moment, the following is supported:
@@ -68,7 +68,7 @@ SSDP constructor accepts an optional configuration object. At the moment, the fo
 - `ssdpIp` _String_ SSDP multicast group. Default: '239.255.255.250'
 - `ssdpPort` _Number_ SSDP port. Default: 1900
 - `ssdpTtl` _Number_ Multicast TTL. Default: 1
-- `udn` _String_ Unique Device Name. Defaults to "uuid:e3f28962-f694-471f-8f74-c6abd507594b".
+- `udn` _String_ Unique Device Name. Defaults to "uuid:f40c2981-7329-40b7-8b04-27f187aecfb5".
 - `description` _String_ Path to description file. Defaults to "upnp/desc.php".
 - `ttl` _Number_ Packet TTL. Default: 1800.
 

@@ -1,4 +1,4 @@
-var SSDP = require('../').Server
+var SSDP = require('../index').Server
   , server = new SSDP({logLevel: 'TRACE', log: true})
 
 server.addUSN('upnp:rootdevice')

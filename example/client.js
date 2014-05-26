@@ -1,4 +1,4 @@
-var ssdp = require('../').Client
+var ssdp = require('../index').Client
   , client = new ssdp({logLevel: 'TRACE', log: true})
 
 client.on('notify', function () {
