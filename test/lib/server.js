@@ -75,6 +75,10 @@ describe('Server', function () {
 
       // it's 4 because we call `advertise` immediately after bind. Lame.
       assert.equal(server.sock.send.callCount, 4)
+
+      clock.tick(500)
+
+      assert.equal(server.sock.send.callCount, 8)
     })
   })
 
