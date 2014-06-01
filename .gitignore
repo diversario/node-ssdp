@@ -12,3 +12,5 @@ node_modules
 tools
 npm-debug.log
 coverage/
+.coveralls.yml
+reports/

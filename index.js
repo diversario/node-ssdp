@@ -1,4 +1,4 @@
 module.exports = {
-  Server: require('./lib/server'),
-  Client: require('./lib/client')
+  Server: process.env.SSDP_COV ? require('./lib-cov/server') : require('./lib/server'),
+  Client: process.env.SSDP_COV ? require('./lib-cov/client') : require('./lib/client')
 }

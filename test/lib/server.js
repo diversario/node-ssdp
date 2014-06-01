@@ -2,7 +2,7 @@ require('../helper')
 
 var assert = require('assert')
 
-var Server = require('../../lib/server')
+var Server = require('../../').Server
 
 describe('Server', function () {
   context('on start', function () {
@@ -229,7 +229,7 @@ describe('Server', function () {
 
       server.advertise = this.sinon.stub() // otherwise it'll call `send`
 
-      server.start(this.getFakeSocket())
+      server.start('0.0.0.0', 10000, this.getFakeSocket())
 
       this.sinon.spy(server, '_respondToSearch')
 
@@ -259,7 +259,7 @@ describe('Server', function () {
         'HTTP/1.1 200 OK',
         'ST: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5',
         'USN: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5',
-        'LOCATION: http://192.168.11.63:10293/upnp/desc.html',
+        'LOCATION: http://0.0.0.0:10000/upnp/desc.html',
         'CACHE-CONTROL: max-age=1800',
         //'DATE: Fri, 30 May 2014 15:07:26 GMT', we'll test for this separately
         'SERVER: node.js/0.10.28 UPnP/1.1 node-ssdp/1.0.1',
