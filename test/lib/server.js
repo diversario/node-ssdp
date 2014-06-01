@@ -100,6 +100,132 @@ describe('Server', function () {
     })
   })
 
+  context('when advertising', function () {
+    it('sends out correct alive info', function () {
+      var clock = this.sinon.useFakeTimers()
+      var adInterval = 500 // to avoid all other advertise timers
+
+      var server = new Server({
+        ssdpIp: 'ip',
+        ssdpTtl: 'never',
+        adInterval: adInterval,
+        ssdpSig: 'signature',
+        ttl: 'ttl',
+        description: 'desc',
+        udn: 'device name'
+      })
+
+      var _advertise = server.advertise
+
+      this.sinon.stub(server, 'advertise', function (alive) {
+        if (alive === false) return
+        _advertise.call(server)
+      })
+
+      var socket = this.getFakeSocket()
+
+      server.addUSN('tv/video')
+
+      server.start('1.2.3.4', '9001', socket)
+
+      clock.tick(500)
+
+      // server.sock.send should've been called 2 times with 2 unique args
+      assert.equal(server.sock.send.callCount, 2)
+
+      // argument order is:
+      // message, _, message.length, ssdp port, ssdp host
+      var args1 = server.sock.send.getCall(0).args
+
+      var method1 = server._getMethod(args1[0].toString())
+      assert(method1, 'NOTIFY')
+
+      var headers1 = server._getHeaders(args1[0].toString())
+      assert.equal(headers1.HOST, 'ip:1900')
+      assert.equal(headers1.NT, 'tv/video')
+      assert.equal(headers1.NTS, 'ssdp:alive')
+      assert.equal(headers1.USN, 'device name::tv/video')
+      assert.equal(headers1.LOCATION, 'http://1.2.3.4:9001/desc')
+      assert.equal(headers1['CACHE-CONTROL'], 'max-age=1800')
+      assert.equal(headers1.SERVER, 'signature')
+
+      var port1 = args1[3]
+      assert.equal(port1, 1900)
+
+      var host1 = args1[4]
+      assert.equal(host1, 'ip')
+
+      var args2 = server.sock.send.getCall(1).args
+
+      var method2 = server._getMethod(args2[0].toString())
+      assert(method2, 'NOTIFY')
+
+      var headers2 = server._getHeaders(args2[0].toString())
+      assert.equal(headers2.HOST, 'ip:1900')
+      assert.equal(headers2.NT, 'device name')
+      assert.equal(headers2.NTS, 'ssdp:alive')
+      assert.equal(headers2.USN, 'device name')
+      assert.equal(headers2.LOCATION, 'http://1.2.3.4:9001/desc')
+      assert.equal(headers2['CACHE-CONTROL'], 'max-age=1800')
+      assert.equal(headers2.SERVER, 'signature')
+
+      var port2 = args2[3]
+      assert.equal(port2, 1900)
+
+      var host2 = args2[4]
+      assert.equal(host2, 'ip')
+    })
+
+    it('sends out correct byebye info', function () {
+      var adInterval = 500 // to avoid all other advertise timers
+
+      var server = new Server({
+        ssdpIp: 'ip',
+        ssdpTtl: 'never',
+        adInterval: adInterval,
+        ssdpSig: 'signature',
+        ttl: 'ttl',
+        description: 'desc',
+        udn: 'device name'
+      })
+
+      // avoid calling server.start
+      var socket = this.getFakeSocket()
+      server.sock = socket
+      server._adLoopInterval = 1
+
+      server.addUSN('tv/video')
+
+      server.stop()
+
+      // server.sock.send should've been called 2 times with 2 unique args
+      assert.equal(socket.send.callCount, 2)
+
+      // argument order is:
+      // message, _, message.length, ssdp port, ssdp host
+      var args1 = socket.send.getCall(0).args
+
+      var method1 = server._getMethod(args1[0].toString())
+      assert(method1, 'NOTIFY')
+
+      var headers1 = server._getHeaders(args1[0].toString())
+      assert.equal(headers1.HOST, 'ip:1900')
+      assert.equal(headers1.NT, 'tv/video')
+      assert.equal(headers1.NTS, 'ssdp:byebye')
+      assert.equal(headers1.USN, 'device name::tv/video')
+      assert.equal(headers1.LOCATION, undefined)
+      assert.equal(headers1['CACHE-CONTROL'], undefined)
+      assert.equal(headers1.SERVER, undefined)
+
+      var port1 = args1[3]
+      assert.equal(port1, 1900)
+
+      var host1 = args1[4]
+      assert.equal(host1, 'ip')
+
+    })
+  })
+
   context('when receiving a message with unknown command', function () {
     //FIXME Ctrl-C, Ctrl-V!
     var UNKNOWN_CMD = [

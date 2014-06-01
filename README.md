@@ -1,7 +1,7 @@
-[![Build Status](https://secure.travis-ci.org/diversario/node-ssdp.png?branch=feature%2Fi17-write-tests)](http://travis-ci.org/diversario/node-ssdp)
+[![Build Status](https://travis-ci.org/diversario/node-ssdp.svg?branch=feature%2Fi17-write-tests)](https://travis-ci.org/diversario/node-ssdp)
 [![Coverage Status](https://img.shields.io/coveralls/diversario/node-ssdp.svg)](https://coveralls.io/r/diversario/node-ssdp?branch=feature%2Fi17-write-tests)
 [![Dependency Status](https://gemnasium.com/diversario/node-ssdp.png)](https://gemnasium.com/diversario/node-ssdp)
-[![NPM version](https://badge.fury.io/js/node-ssdp.png)](http://badge.fury.io/js/node-ssdp)
+[![NPM version](https://badge.fury.io/js/node-ssdp.svg)](http://badge.fury.io/js/node-ssdp)
 [![Stories in Ready](https://badge.waffle.io/diversario/node-ssdp.png?label=ready&title=Ready)](https://waffle.io/diversario/node-ssdp)
 
 ## Installation
