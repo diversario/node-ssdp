@@ -13,7 +13,7 @@ coverage:
 	@rm -rf lib-cov coverage
 
 coveralls: test coverage
-	@cat reports/lcov.info | ./node_modules/.bin/coveralls
+	@if [[ $TRAVIS == 1 && $CI == 1 ]]; then cat reports/lcov.info | ./node_modules/.bin/coveralls; fi
 	@$(MAKE) clean
 
 clean:
