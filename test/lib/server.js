@@ -60,6 +60,22 @@ describe('Server', function () {
 
       done()
     })
+
+    it('starts advertising every n milliseconds', function () {
+      var clock = this.sinon.useFakeTimers()
+      var adInterval = 500 // to avoid all other advertise timers
+      var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!', 'adInterval': adInterval})
+      var socket = this.getFakeSocket()
+
+      server.addUSN('tv/video')
+
+      server.start(socket)
+
+      clock.tick(500)
+
+      // it's 4 because we call `advertise` immediately after bind. Lame.
+      assert.equal(server.sock.send.callCount, 4)
+    })
   })
 
   context('on stop', function () {

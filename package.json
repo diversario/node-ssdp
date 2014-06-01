@@ -28,17 +28,11 @@
     "node": ">=0.10.0"
   },
   "devDependencies": {
-<<<<<<< HEAD
-    "istanbul": "^0.2.10",
-    "mocha": "^1.19.0",
-    "sinon": "^1.10.0"
-=======
     "coveralls": "~2.10.0",
     "istanbul": "~0.2.10",
     "mocha": "~1.19.0",
     "mocha-istanbul": "~0.2.0",
     "sinon": "~1.10.0"
->>>>>>> 9ccd1ff... Trying to make coveralls work.
   },
   "scripts": {
     "test": "make coveralls",
