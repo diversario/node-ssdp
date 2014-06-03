@@ -5,8 +5,8 @@ client.on('notify', function () {
   //console.log('Got a notification.')
 })
 
-client.on('response', function inResponse(msg, rinfo) {
-  console.log('Got a response to an m-search:', msg.toString())
+client.on('response', function inResponse(code, headers, rinfo) {
+  console.log('Got a response to an m-search:\n%d\n%s\n%s', code, JSON.stringify(headers, null, '  '), JSON.stringify(rinfo, null, '  '))
 })
 
 client.search('urn:schemas-upnp-org:service:ContentDirectory:1')
