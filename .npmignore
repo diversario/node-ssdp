@@ -1,4 +1,4 @@
 .settings
 .project
 /node_modules
-
+.coveralls.yml
