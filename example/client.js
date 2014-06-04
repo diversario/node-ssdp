@@ -1,5 +1,8 @@
 var ssdp = require('../index').Client
-  , client = new ssdp({logLevel: 'TRACE', log: true})
+  , client = new ssdp({
+    logLevel: 'TRACE',
+//    unicastHost: '192.168.11.63'
+  })
 
 client.on('notify', function () {
   //console.log('Got a notification.')

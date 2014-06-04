@@ -7,7 +7,7 @@ var Client = require('../../').Client
 describe('Client', function () {
   context('when receiving a reply to M-SEARCH', function () {
     it('emit a parsed object', function (done) {
-      var client = new Client
+      var client = new Client(null, this.getFakeSocket())
 
       var response = [
         'HTTP/1.1 200 OK',
@@ -43,7 +43,7 @@ describe('Client', function () {
         done()
       })
 
-      client.start(this.getFakeSocket())
+      client.start()
 
       client.sock.emit('message', Buffer(response.join('\r\n')))
     })
