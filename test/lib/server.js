@@ -7,11 +7,11 @@ var Server = require('../../').Server
 describe('Server', function () {
   context('on start', function () {
     it('binds appropriate listeners to socket', function () {
-      var server = new Server
-
       var socket = this.getFakeSocket()
 
-      server.start(socket)
+      var server = new Server(socket)
+
+      server.start()
 
       var errorHandlers = socket.listeners('error')
 
@@ -30,25 +30,23 @@ describe('Server', function () {
     })
 
     it('does not allow double-binding on the socket', function () {
-      var server = new Server
-
       var socket = this.getFakeSocket()
+      var server = new Server(socket)
 
       this.sinon.spy(socket, 'on')
 
-      server.start(socket)
-      server.start(socket)
-      server.start(socket)
+      server.start()
+      server.start()
+      server.start()
 
       assert.equal(socket.on.callCount, 3)
     })
 
     it('adds multicast membership', function (done) {
-      var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!'})
-
       var socket = this.getFakeSocket()
+      var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!'}, socket)
 
-      server.start(socket)
+      server.start()
 
       socket.emit('listening')
 
@@ -64,12 +62,12 @@ describe('Server', function () {
     it('starts advertising every n milliseconds', function () {
       var clock = this.sinon.useFakeTimers()
       var adInterval = 500 // to avoid all other advertise timers
-      var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!', 'adInterval': adInterval})
       var socket = this.getFakeSocket()
+      var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!', 'adInterval': adInterval}, socket)
 
       server.addUSN('tv/video')
 
-      server.start(socket)
+      server.start()
 
       clock.tick(500)
 
@@ -84,10 +82,10 @@ describe('Server', function () {
 
   context('on stop', function () {
     it('does not allow multiple _stops', function () {
-      var server = new Server
+      var socket = this.getFakeSocket()
+      var server = new Server(socket)
 
-      var sockStub = this.getFakeSocket()
-      server.start(sockStub)
+      server.start()
 
       assert(server.sock.bind.calledOnce)
 
@@ -96,7 +94,7 @@ describe('Server', function () {
       server.stop()
 
       assert(!server.sock)
-      assert.equal(sockStub.close.callCount, 1)
+      assert.equal(socket.close.callCount, 1)
     })
   })
 
@@ -105,15 +103,18 @@ describe('Server', function () {
       var clock = this.sinon.useFakeTimers()
       var adInterval = 500 // to avoid all other advertise timers
 
+      var socket = this.getFakeSocket()
       var server = new Server({
         ssdpIp: 'ip',
         ssdpTtl: 'never',
+        unicastHost: 'unicast',
+        location: 'location header',
         adInterval: adInterval,
         ssdpSig: 'signature',
         ttl: 'ttl',
         description: 'desc',
         udn: 'device name'
-      })
+      }, socket)
 
       var _advertise = server.advertise
 
@@ -122,11 +123,9 @@ describe('Server', function () {
         _advertise.call(server)
       })
 
-      var socket = this.getFakeSocket()
-
       server.addUSN('tv/video')
 
-      server.start('1.2.3.4', '9001', socket)
+      server.start()
 
       clock.tick(500)
 
@@ -141,11 +140,11 @@ describe('Server', function () {
       assert(method1, 'NOTIFY')
 
       var headers1 = server._getHeaders(args1[0].toString())
-      assert.equal(headers1.HOST, 'ip:1900')
+      assert.equal(headers1.HOST, 'unicast:1900')
       assert.equal(headers1.NT, 'tv/video')
       assert.equal(headers1.NTS, 'ssdp:alive')
       assert.equal(headers1.USN, 'device name::tv/video')
-      assert.equal(headers1.LOCATION, 'http://1.2.3.4:9001/desc')
+      assert.equal(headers1.LOCATION, 'location header')
       assert.equal(headers1['CACHE-CONTROL'], 'max-age=1800')
       assert.equal(headers1.SERVER, 'signature')
 
@@ -161,11 +160,11 @@ describe('Server', function () {
       assert(method2, 'NOTIFY')
 
       var headers2 = server._getHeaders(args2[0].toString())
-      assert.equal(headers2.HOST, 'ip:1900')
+      assert.equal(headers2.HOST, 'unicast:1900')
       assert.equal(headers2.NT, 'device name')
       assert.equal(headers2.NTS, 'ssdp:alive')
       assert.equal(headers2.USN, 'device name')
-      assert.equal(headers2.LOCATION, 'http://1.2.3.4:9001/desc')
+      assert.equal(headers2.LOCATION, 'location header')
       assert.equal(headers2['CACHE-CONTROL'], 'max-age=1800')
       assert.equal(headers2.SERVER, 'signature')
 
@@ -179,19 +178,21 @@ describe('Server', function () {
     it('sends out correct byebye info', function () {
       var adInterval = 500 // to avoid all other advertise timers
 
+      var socket = this.getFakeSocket()
       var server = new Server({
         ssdpIp: 'ip',
         ssdpTtl: 'never',
         adInterval: adInterval,
         ssdpSig: 'signature',
+        unicastHost: 'unicast',
+        location: 'location header',
         ttl: 'ttl',
         description: 'desc',
         udn: 'device name'
-      })
+      }, socket)
 
       // avoid calling server.start
-      var socket = this.getFakeSocket()
-      server.sock = socket
+
       server._adLoopInterval = 1
 
       server.addUSN('tv/video')
@@ -209,7 +210,7 @@ describe('Server', function () {
       assert(method1, 'NOTIFY')
 
       var headers1 = server._getHeaders(args1[0].toString())
-      assert.equal(headers1.HOST, 'ip:1900')
+      assert.equal(headers1.HOST, 'unicast:1900')
       assert.equal(headers1.NT, 'tv/video')
       assert.equal(headers1.NTS, 'ssdp:byebye')
       assert.equal(headers1.USN, 'device name::tv/video')
@@ -240,9 +241,9 @@ describe('Server', function () {
     ].join('\r\n')
 
     it('server emits nothing but logs it', function (done) {
-      var server = new Server
+      var server = new Server(this.getFakeSocket())
 
-      server.start(this.getFakeSocket())
+      server.start()
 
       this.sinon.spy(server, 'emit')
 
@@ -291,7 +292,7 @@ describe('Server', function () {
     ].join('\r\n')
 
     it('with ssdp:alive server emits `advertise-alive` with data', function (done) {
-      var server = new Server
+      var server = new Server(this.getFakeSocket())
 
       server.on('advertise-alive', function (headers) {
         ['HOST', 'NT', 'NTS', 'USN', 'LOCATION', 'CACHE-CONTROL', 'SERVER'].forEach(function (header) {
@@ -301,13 +302,13 @@ describe('Server', function () {
         done()
       })
 
-      server.start(this.getFakeSocket())
+      server.start()
 
       server.sock.emit('message', NOTIFY_ALIVE, {address: 1, port: 2})
     })
 
     it('with ssdp:bye server emits `advertise-bye` with data', function (done) {
-      var server = new Server
+      var server = new Server(this.getFakeSocket())
 
       server.on('advertise-bye', function (headers) {
         ['HOST', 'NT', 'NTS', 'USN'].forEach(function (header) {
@@ -317,15 +318,15 @@ describe('Server', function () {
         done()
       })
 
-      server.start(this.getFakeSocket())
+      server.start()
 
       server.sock.emit('message', NOTIFY_BYE, {address: 1, port: 2})
     })
 
     it('with unknown NTS server emits nothing but logs it', function (done) {
-      var server = new Server
+      var server = new Server(this.getFakeSocket())
 
-      server.start(this.getFakeSocket())
+      server.start()
 
       this.sinon.spy(server, 'emit')
 
@@ -346,11 +347,11 @@ describe('Server', function () {
 
   context('when receiving an M-SEARCH message', function () {
     it('with unknown service type it\'s ignored', function (done) {
-      var server = new Server
+      var server = new Server(this.getFakeSocket())
 
       server.advertise = this.sinon.stub() // otherwise it'll call `send`
 
-      server.start(this.getFakeSocket())
+      server.start()
 
       this.sinon.spy(server, '_respondToSearch')
 
@@ -371,11 +372,11 @@ describe('Server', function () {
     })
 
     it('with ssdp:all service type it replies with a unicast 200 OK', function (done) {
-      var server = new Server
+      var server = new Server(this.getFakeSocket())
 
       server.advertise = this.sinon.stub() // otherwise it'll call `send`
 
-      server.start('0.0.0.0', 10000, this.getFakeSocket())
+      server.start()
 
       this.sinon.spy(server, '_respondToSearch')
 
@@ -405,7 +406,7 @@ describe('Server', function () {
         'HTTP/1.1 200 OK',
         'ST: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5',
         'USN: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5',
-        'LOCATION: http://0.0.0.0:10000/upnp/desc.html',
+        'LOCATION: http://' + require('ip').address() + ':10293/upnp/desc.html',
         'CACHE-CONTROL: max-age=1800',
         //'DATE: Fri, 30 May 2014 15:07:26 GMT', we'll test for this separately
         'SERVER: node.js/0.10.28 UPnP/1.1 node-ssdp/1.0.1',
@@ -418,7 +419,7 @@ describe('Server', function () {
         return !/^DATE/.test(header) && header !== ''
       })
 
-      assert.deepEqual(expectedMessage, filteredMessage)
+      require('chai').assert.deepEqual(filteredMessage, expectedMessage)
 
       var dateHeader = message.filter(function (header) {
         return /^DATE/.test(header)

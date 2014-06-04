@@ -13,6 +13,8 @@ afterEach(function(){
 function getFakeSocket() {
   var s = new EE
 
+  s.type = 'udp4'
+
   s.address = this.sinon.stub()
   s.address.returns({
     address: 1,
@@ -22,7 +24,7 @@ function getFakeSocket() {
   s.addMembership = this.sinon.stub()
   s.setMulticastTTL = this.sinon.stub()
   s.bind = function (port, addr, cb) {
-    cb()
+    cb && cb()
   }
   this.sinon.spy(s, 'bind')
   s.send = this.sinon.stub()
