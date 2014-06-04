@@ -30,6 +30,7 @@
     "node": ">=0.10.0"
   },
   "devDependencies": {
+    "chai": "^1.9.1",
     "coveralls": "~2.10.0",
     "istanbul": "~0.2.10",
     "mocha": "~1.19.0",

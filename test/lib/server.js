@@ -1,6 +1,6 @@
 require('../helper')
 
-var assert = require('assert')
+var assert = require('chai').assert
 
 var Server = require('../../').Server
 
@@ -419,7 +419,7 @@ describe('Server', function () {
         return !/^DATE/.test(header) && header !== ''
       })
 
-      require('chai').assert.deepEqual(filteredMessage, expectedMessage)
+      assert.deepEqual(filteredMessage, expectedMessage)
 
       var dateHeader = message.filter(function (header) {
         return /^DATE/.test(header)
