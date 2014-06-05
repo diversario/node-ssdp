@@ -67,12 +67,15 @@ Take a look at `example` directory as well to see examples or client and server.
 ##Configuration
 SSDP constructor accepts an optional configuration object. At the moment, the following is supported:
 
-- (deprecated) `log` _Boolean_ Enable/disable logging. Default: false.
+- (deprecated; see `logLevel`) `log` _Boolean_ Enable/disable logging. Default: false.
 - `logLevel` _String_ Specifies log level to print. Possible values: `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`. If not explicitly set in options logging is disabled completely.
 - `ssdpSig` _String_ SSDP signature. Default: 'node.js/0.0.8 UPnP/1.1 node-ssdp/0.1.1'
 - `ssdpIp` _String_ SSDP multicast group. Default: '239.255.255.250'
 - `ssdpPort` _Number_ SSDP port. Default: 1900
 - `ssdpTtl` _Number_ Multicast TTL. Default: 1
+- `adInterval` _Number_ `advertise` event frequency (ms)
+- `unicastHost` _String_ IP address or hostname of server where SSDP service is running. This is used in `HOST` header
+- `location` _String_ URL pointing to description of your service
 - `udn` _String_ Unique Device Name. Defaults to "uuid:f40c2981-7329-40b7-8b04-27f187aecfb5".
 - `description` _String_ Path to description file. Defaults to "upnp/desc.php".
 - `ttl` _Number_ Packet TTL. Default: 1800.
