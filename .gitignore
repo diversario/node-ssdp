@@ -11,3 +11,6 @@ atlassian-ide-plugin.xml
 node_modules
 tools
 npm-debug.log
+coverage/
+.coveralls.yml
+reports/

@@ -1,5 +1,9 @@
-var SSDP = require('../').Server
-  , server = new SSDP({logLevel: 'TRACE', log: true})
+var SSDP = require('../index').Server
+  , server = new SSDP({
+    logLevel: 'TRACE',
+    //unicastHost: '192.168.11.63',
+    location: require('ip').address() + '/desc.html'
+  })
 
 server.addUSN('upnp:rootdevice')
 server.addUSN('urn:schemas-upnp-org:device:MediaServer:1')
