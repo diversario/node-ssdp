@@ -20,7 +20,7 @@ describe('Client', function () {
         'EXT: ' // note the space
       ]
 
-      client.on('response', function (code, headers, rinfo) {
+      client.on('response', function (headers, code, rinfo) {
         assert.equal(code, 200)
 
         var expected = {
