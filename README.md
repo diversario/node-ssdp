@@ -18,17 +18,16 @@ There is another package called `ssdp` which is the original unmaintained versio
     var Client = require('node-ssdp').Client
       , client = new Client();
 
-    client.on('response', function inResponse(msg, rinfo) {
+    client.on('response', function (headers, statusCode, rinfo) {
       console.log('Got a response to an m-search.');
     });
 
+    // search for a service type
     client.search('urn:schemas-upnp-org:service:ContentDirectory:1');
 
-    // Or maybe if you want to scour for everything
+    // Or get a list of all services on the network
 
     client.search('ssdp:all');
-
-    // This should get you at least started.
 ```
 
 ## Usage - Server
@@ -43,19 +42,17 @@ There is another package called `ssdp` which is the original unmaintained versio
     server.addUSN('urn:schemas-upnp-org:service:ContentDirectory:1');
     server.addUSN('urn:schemas-upnp-org:service:ConnectionManager:1');
 
-    server.on('advertise-alive', function (heads) {
+    server.on('advertise-alive', function (headers) {
       // Expire old devices from your cache.
       // Register advertising device somewhere (as designated in http headers heads)
     });
 
-    server.on('advertise-bye', function (heads) {
+    server.on('advertise-bye', function (headers) {
       // Remove specified device from cache.
     });
 
-    // This should get your local ip to pass off to the server.
-    require('dns').lookup(require('os').hostname(), function (err, add) {
-      server.start(add);
-    });
+    // start the server
+    server.start();
 
     process.on('exit', function(){
       server.stop() // advertise shutting down and stop listening
@@ -79,12 +76,6 @@ SSDP constructor accepts an optional configuration object. At the moment, the fo
 - `udn` _String_ Unique Device Name. Defaults to "uuid:f40c2981-7329-40b7-8b04-27f187aecfb5".
 - `description` _String_ Path to description file. Defaults to "upnp/desc.php".
 - `ttl` _Number_ Packet TTL. Default: 1800.
-
-## Author
-
-Initial commit of this module is a clone of https://bitbucket.org/Xedecimal/node-ssdp, commit 0c6cd0a (2012-03-21).
-
-Forked with author's permission.
 
 # License
 

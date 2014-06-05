@@ -8,9 +8,8 @@
     "device",
     "upnp"
   ],
-  "version": "1.0.1",
-  "author": "Nicholas Libby <Xedecimal@gmail.com>",
-  "maintainer": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
+  "version": "2.0.0",
+  "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
     "ip": "^0.3.0"
   },
