@@ -1,4 +1,5 @@
 require('../helper')
+var moduleVersion = require('../../package.json').version
 
 var assert = require('assert')
 
@@ -16,7 +17,7 @@ describe('Client', function () {
         'LOCATION: http://0.0.0.0:10000/upnp/desc.html',
         'CACHE-CONTROL: max-age=1800',
         'DATE: Fri, 30 May 2014 15:07:26 GMT',
-        'SERVER: node.js/0.10.28 UPnP/1.1 node-ssdp/1.0.1',
+        'SERVER: node.js/0.10.28 UPnP/1.1 node-ssdp/' + moduleVersion,
         'EXT: ' // note the space
       ]
 
@@ -29,7 +30,7 @@ describe('Client', function () {
           'LOCATION': 'http://0.0.0.0:10000/upnp/desc.html',
           'CACHE-CONTROL': 'max-age=1800',
           //'DATE': 'Fri, 30 May 2014 15:07:26 GMT',
-          'SERVER': 'node.js/0.10.28 UPnP/1.1 node-ssdp/1.0.1',
+          'SERVER': 'node.js/0.10.28 UPnP/1.1 node-ssdp/' + moduleVersion,
           'EXT': ''
         }
 
