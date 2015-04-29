@@ -72,7 +72,7 @@ SSDP constructor accepts an optional configuration object. At the moment, the fo
 - `ssdpTtl` _Number_ Multicast TTL. Default: 1
 - `adInterval` _Number_ `advertise` event frequency (ms)
 - `unicastHost` _String_ IP address or hostname of server where SSDP service is running. This is used in `HOST` header
-- `location` _String_ URL pointing to description of your service
+- `location` _String_ URL pointing to description of your service, or a function which returns that URL
 - `udn` _String_ Unique Device Name. Defaults to "uuid:f40c2981-7329-40b7-8b04-27f187aecfb5".
 - `description` _String_ Path to description file. Defaults to "upnp/desc.php".
 - `ttl` _Number_ Packet TTL. Default: 1800.
