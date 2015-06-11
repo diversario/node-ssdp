@@ -431,5 +431,68 @@ describe('Server', function () {
 
       done()
     })
+
+    it('with matching wildcard it replies with a unicast 200 OK', function (done) {
+      var server = new Server({
+        allowWildcards: true
+      }, this.getFakeSocket())
+      server.addUSN('urn:Manufacturer:device:controllee:1')
+
+      server.advertise = this.sinon.stub() // otherwise it'll call `send`
+
+      server.start()
+
+      this.sinon.spy(server, '_respondToSearch')
+
+      var MS_ALL = [
+        'M-SEARCH * HTTP/1.1',
+        'HOST: 239.255.255.250:1900',
+        'ST: urn:Manufacturer:device:*',
+        'MAN: "ssdp:discover"',
+        'MX: 3'
+      ].join('\r\n')
+
+      server.sock.emit('message', MS_ALL, {address: 1, port: 2})
+
+      assert(server._respondToSearch.calledOnce)
+      assert(server.sock.send.calledOnce)
+
+      var args = server.sock.send.getCall(0).args
+        , message = args[0]
+        , port = args[3]
+        , ip = args[4]
+
+      assert(Buffer.isBuffer(message))
+      assert.equal(port, 2)
+      assert.equal(ip, 1)
+
+      var expectedMessage = [
+        'HTTP/1.1 200 OK',
+        'ST: urn:Manufacturer:device:*',
+        'USN: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5::urn:Manufacturer:device:*',
+        'LOCATION: http://' + require('ip').address() + ':10293/upnp/desc.html',
+        'CACHE-CONTROL: max-age=1800',
+        //'DATE: Fri, 30 May 2014 15:07:26 GMT', we'll test for this separately
+        'SERVER: node.js/' + process.versions.node + ' UPnP/1.1 node-ssdp/' + moduleVersion,
+        'EXT: ' // note the space
+      ]
+
+      message = message.toString().split('\r\n')
+
+      var filteredMessage = message.filter(function (header) {
+        return !/^DATE/.test(header) && header !== ''
+      })
+
+      assert.deepEqual(filteredMessage, expectedMessage)
+
+      var dateHeader = message.filter(function (header) {
+        return /^DATE/.test(header)
+      })[0]
+
+      // should look like UTC string
+      assert(/\w+, \d+ \w+ \d+ [\d:]+ GMT/.test(dateHeader))
+
+      done()
+    })
   })
 })
