@@ -5,10 +5,12 @@ var SSDP = require('../index').Server
     location: require('ip').address() + '/desc.html'
   })
 
-server.addUSN('upnp:rootdevice')
-server.addUSN('urn:schemas-upnp-org:device:MediaServer:1')
-server.addUSN('urn:schemas-upnp-org:service:ContentDirectory:1')
-server.addUSN('urn:schemas-upnp-org:service:ConnectionManager:1')
+//server.addUSN('upnp:rootdevice')
+//server.addUSN('urn:schemas-upnp-org:device:MediaServer:1')
+//server.addUSN('urn:schemas-upnp-org:service:ContentDirectory:1')
+//server.addUSN('urn:schemas-upnp-org:service:ConnectionManager:1')
+
+server.addUSN('urn:schemas-upnp-org:service:NODE-SSDP-TEST-SERVER')
 
 server.on('advertise-alive', function (heads) {
   //console.log('advertise-alive', heads)

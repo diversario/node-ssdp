@@ -9,7 +9,13 @@ client.on('notify', function () {
 })
 
 client.on('response', function inResponse(headers, code, rinfo) {
-  console.log('Got a response to an m-search:\n%d\n%s\n%s', code, JSON.stringify(headers, null, '  '), JSON.stringify(rinfo, null, '  '))
+  /node\.js/.test(headers.SERVER) &&
+  console.log(
+    'Got a response to an m-search:\n%d\n%s\n%s',
+    code,
+    JSON.stringify(headers, null, '  '),
+    JSON.stringify(rinfo, null, '  ')
+  )
 })
 
 client.search('urn:schemas-upnp-org:service:ContentDirectory:1')
