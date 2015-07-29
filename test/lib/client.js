@@ -1,7 +1,7 @@
 require('../helper')
 var moduleVersion = require('../../package.json').version
 
-var assert = require('assert')
+var expect = require('chai').expect
 
 var Client = require('../../').Client
 
@@ -22,7 +22,7 @@ describe('Client', function () {
       ]
 
       client.on('response', function (headers, code, rinfo) {
-        assert.equal(code, 200)
+        expect(code).to.equal(200)
 
         var expected = {
           'ST': 'uuid:f40c2981-7329-40b7-8b04-27f187aecfb5',
@@ -38,8 +38,8 @@ describe('Client', function () {
 
         delete headers.DATE
 
-        assert.deepEqual(expected, headers)
-        assert(/\w+, \d+ \w+ \d+ [\d:]+ GMT/.test(date))
+        expect(expected).to.deep.equal(headers)
+        expect(date).to.match(/\w+, \d+ \w+ \d+ [\d:]+ GMT/)
 
         done()
       })

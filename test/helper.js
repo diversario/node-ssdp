@@ -23,10 +23,14 @@ function getFakeSocket() {
 
   s.addMembership = this.sinon.stub()
   s.setMulticastTTL = this.sinon.stub()
+  s.setMulticastLoopback = this.sinon.stub()
+
   s.bind = function (port, addr, cb) {
     cb && cb()
   }
+
   this.sinon.spy(s, 'bind')
+
   s.send = this.sinon.stub()
   s.close = this.sinon.stub()
 
