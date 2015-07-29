@@ -62,20 +62,30 @@ There is another package called `ssdp` which is the original unmaintained versio
 Take a look at `example` directory as well to see examples or client and server.
 
 ##Configuration
-SSDP constructor accepts an optional configuration object. At the moment, the following is supported:
+`new SSDP([options, [socket]])`
 
-- (deprecated; see `logLevel`) `log` _Boolean_ Enable/disable logging. Default: false.
+SSDP constructor accepts an optional configuration object and an optional initialized socket. At the moment, the following is supported:
+
 - `logLevel` _String_ Specifies log level to print. Possible values: `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`. If not explicitly set in options logging is disabled completely.
-- `ssdpSig` _String_ SSDP signature. Default: 'node.js/0.0.8 UPnP/1.1 node-ssdp/0.1.1'
-- `ssdpIp` _String_ SSDP multicast group. Default: '239.255.255.250'
-- `ssdpPort` _Number_ SSDP port. Default: 1900
-- `ssdpTtl` _Number_ Multicast TTL. Default: 1
-- `adInterval` _Number_ `advertise` event frequency (ms)
-- `unicastHost` _String_ IP address or hostname of server where SSDP service is running. This is used in `HOST` header
+- `logJSON` _Boolean_ Log JSON strings (using [bunyan](https://github.com/trentm/node-bunyan)). Default: `true`.
+- `ssdpSig` _String_ SSDP signature. Default: `node.js/NODE_VERSION UPnP/1.1 node-ssdp/PACKAGE_VERSION`
+- `ssdpIp` _String_ SSDP multicast group. Default: `239.255.255.250`.
+- `ssdpPort` _Number_ SSDP port. Default: `1900`
+- `ssdpTtl` _Number_ Multicast TTL. Default: `1`
+- `adInterval` _Number_ `advertise` event frequency (ms). Default: 10 sec.
+- `unicastHost` _String_ IP address or hostname of server where SSDP service is running. This is used in `HOST` header. Default: `0.0.0.0`.
 - `location` _String_ URL pointing to description of your service, or a function which returns that URL
-- `udn` _String_ Unique Device Name. Defaults to "uuid:f40c2981-7329-40b7-8b04-27f187aecfb5".
-- `description` _String_ Path to description file. Defaults to "upnp/desc.php".
-- `ttl` _Number_ Packet TTL. Default: 1800.
+- `udn` _String_ Unique Device Name. Default: `uuid:f40c2981-7329-40b7-8b04-27f187aecfb5`.
+- `description` _String_ Path to description file. Default: `upnp/desc.php`.
+- `ttl` _Number_ Packet TTL. Default: `1800`.
+- `allowWildcards` _Boolean_ Accept wildcards (`*`) in `serviceTypes` of `M-SEARCH` packets, e.g. `usn:Belkin:device:**`. Default: `false`
+
+###Logging
+Aside from `logLevel` configuration option you can set the level via an environment variable `LOG_LEVEL`, which overrides configuration.
+
+At log levels `DEBUG` and `TRACE` module will print call source location.
+
+Use `bunyan` CLI tool to pretty-print JSON logs; running the module with pretty-print enabled is not recommended. 
 
 # License
 
