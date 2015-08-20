@@ -176,6 +176,90 @@ describe('Server', function () {
       assert.equal(host2, 'ip')
     })
 
+    it('includes extra headers in alive message', function () {
+      var clock = this.sinon.useFakeTimers()
+      var adInterval = 500 // to avoid all other advertise timers
+
+      var socket = this.getFakeSocket()
+      var server = new Server({
+        ssdpIp: 'ip',
+        ssdpTtl: 'never',
+        unicastHost: 'unicast',
+        location: 'location header',
+        adInterval: adInterval,
+        ssdpSig: 'signature',
+        ttl: 'ttl',
+        description: 'desc',
+        udn: 'device name',
+        headers: {
+            FOO: 'bar',
+            BAZ: 'qux'
+        }
+      }, socket)
+
+      var _advertise = server.advertise
+
+      this.sinon.stub(server, 'advertise', function (alive) {
+        if (alive === false) return
+        _advertise.call(server)
+      })
+
+      server.addUSN('tv/video')
+
+      server.start()
+
+      clock.tick(500)
+
+      // server.sock.send should've been called 2 times with 2 unique args
+      assert.equal(server.sock.send.callCount, 2)
+
+      // argument order is:
+      // message, _, message.length, ssdp port, ssdp host
+      var args1 = server.sock.send.getCall(0).args
+
+      var method1 = server._getMethod(args1[0].toString())
+      assert(method1, 'NOTIFY')
+
+      var headers1 = server._getHeaders(args1[0].toString())
+      assert.equal(headers1.HOST, 'ip:1900')
+      assert.equal(headers1.NT, 'tv/video')
+      assert.equal(headers1.NTS, 'ssdp:alive')
+      assert.equal(headers1.USN, 'device name::tv/video')
+      assert.equal(headers1.LOCATION, 'location header')
+      assert.equal(headers1['CACHE-CONTROL'], 'max-age=1800')
+      assert.equal(headers1.SERVER, 'signature')
+      assert.equal(headers1.FOO, 'bar')
+      assert.equal(headers1.BAZ, 'qux')
+
+      var port1 = args1[3]
+      assert.equal(port1, 1900)
+
+      var host1 = args1[4]
+      assert.equal(host1, 'ip')
+
+      var args2 = server.sock.send.getCall(1).args
+
+      var method2 = server._getMethod(args2[0].toString())
+      assert(method2, 'NOTIFY')
+
+      var headers2 = server._getHeaders(args2[0].toString())
+      assert.equal(headers2.HOST, 'ip:1900')
+      assert.equal(headers2.NT, 'device name')
+      assert.equal(headers2.NTS, 'ssdp:alive')
+      assert.equal(headers2.USN, 'device name')
+      assert.equal(headers2.LOCATION, 'location header')
+      assert.equal(headers2['CACHE-CONTROL'], 'max-age=1800')
+      assert.equal(headers2.SERVER, 'signature')
+      assert.equal(headers2.FOO, 'bar')
+      assert.equal(headers2.BAZ, 'qux')
+
+      var port2 = args2[3]
+      assert.equal(port2, 1900)
+
+      var host2 = args2[4]
+      assert.equal(host2, 'ip')
+    })
+
     it('sends out correct byebye info', function () {
       var adInterval = 500 // to avoid all other advertise timers
 
@@ -475,6 +559,75 @@ describe('Server', function () {
         //'DATE: Fri, 30 May 2014 15:07:26 GMT', we'll test for this separately
         'SERVER: node.js/' + process.versions.node + ' UPnP/1.1 node-ssdp/' + moduleVersion,
         'EXT: ' // note the space
+      ]
+
+      message = message.toString().split('\r\n')
+
+      var filteredMessage = message.filter(function (header) {
+        return !/^DATE/.test(header) && header !== ''
+      })
+
+      assert.deepEqual(filteredMessage, expectedMessage)
+
+      var dateHeader = message.filter(function (header) {
+        return /^DATE/.test(header)
+      })[0]
+
+      // should look like UTC string
+      assert(/\w+, \d+ \w+ \d+ [\d:]+ GMT/.test(dateHeader))
+
+      done()
+    })
+
+    it('it includes extra headers in replies with a unicast 200 OK', function (done) {
+      var server = new Server({
+        allowWildcards: true,
+        headers: {
+            FOO: 'bar',
+            BAZ: 'qux'
+        }
+      }, this.getFakeSocket())
+      server.addUSN('urn:Manufacturer:device:controllee:1')
+
+      server.advertise = this.sinon.stub() // otherwise it'll call `send`
+
+      server.start()
+
+      this.sinon.spy(server, '_respondToSearch')
+
+      var MS_ALL = [
+        'M-SEARCH * HTTP/1.1',
+        'HOST: 239.255.255.250:1900',
+        'ST: urn:Manufacturer:device:*',
+        'MAN: "ssdp:discover"',
+        'MX: 3'
+      ].join('\r\n')
+
+      server.sock.emit('message', MS_ALL, {address: 1, port: 2})
+
+      assert(server._respondToSearch.calledOnce)
+      assert(server.sock.send.calledOnce)
+
+      var args = server.sock.send.getCall(0).args
+        , message = args[0]
+        , port = args[3]
+        , ip = args[4]
+
+      assert(Buffer.isBuffer(message))
+      assert.equal(port, 2)
+      assert.equal(ip, 1)
+
+      var expectedMessage = [
+        'HTTP/1.1 200 OK',
+        'ST: urn:Manufacturer:device:*',
+        'USN: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5::urn:Manufacturer:device:*',
+        'LOCATION: http://' + require('ip').address() + ':10293/upnp/desc.html',
+        'CACHE-CONTROL: max-age=1800',
+        //'DATE: Fri, 30 May 2014 15:07:26 GMT', we'll test for this separately
+        'SERVER: node.js/' + process.versions.node + ' UPnP/1.1 node-ssdp/' + moduleVersion,
+        'EXT: ', // note the space
+        'FOO: bar',
+        'BAZ: qux'
       ]
 
       message = message.toString().split('\r\n')
