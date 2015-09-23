@@ -11,12 +11,11 @@
   "version": "2.5.1",
   "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
-    "ip": "^0.3.2",
-    "bunyan-pretty-colors": "~0.1.7",
-    "bunyan": "~1.4.0"
+    "ip": "^0.3.2"
   },
   "optionalDependencies": {
     "bunyan-prettystream": "~0.1.3",
+    "bunyan-pretty-colors": "~0.1.7",
     "bunyan": "~1.4.0"
   },
   "repository": {
