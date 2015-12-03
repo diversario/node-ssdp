@@ -8,7 +8,7 @@
     "device",
     "upnp"
   ],
-  "version": "2.6.3",
+  "version": "2.6.4",
   "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
     "ip": "^1.0.1"
