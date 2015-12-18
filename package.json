@@ -8,9 +8,10 @@
     "device",
     "upnp"
   ],
-  "version": "2.9.0",
+  "version": "3.0.0",
   "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
+    "async": "^1.5.0",
     "debug": "^2.2.0",
     "ip": "^1.0.1"
   },
