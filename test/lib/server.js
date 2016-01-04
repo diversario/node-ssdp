@@ -60,7 +60,7 @@ describe('Server', function () {
       done()
     })
 
-    it('starts advertising every n milliseconds', function () {
+    it('starts advertising every n milliseconds', function (done) {
       var clock = this.sinon.useFakeTimers()
       var adInterval = 500 // to avoid all other advertise timers
       var socket = this.getFakeSocket()
@@ -68,16 +68,22 @@ describe('Server', function () {
 
       server.addUSN('tv/video')
 
-      server.start()
+      server.start(function () {
+        clock.tick(300);
 
-      clock.tick(500)
+        // After 300 milliseconds, we should have received
+        // two advertisements, because an additional USN
+        // was added above.
+        assert.equal(server.sock.send.callCount, 2);
 
-      // it's 4 because we call `advertise` immediately after bind. Lame.
-      assert.equal(server.sock.send.callCount, 2)
+        clock.tick(300);
 
-      clock.tick(500)
+        // After 600 milliseconds, we should have received
+        // four advertisements.
+        assert.equal(server.sock.send.callCount, 4);
 
-      assert.equal(server.sock.send.callCount, 4)
+        done();
+      });
     })
   })
 
@@ -97,6 +103,28 @@ describe('Server', function () {
       assert(!server.sock)
       assert.equal(socket.close.callCount, 1)
     })
+
+    it('allows stopping after starting', function (done) {
+      var server = new Server();
+      server.start(function () {
+        server.stop(function () {
+          assert.equal(server._started, false);
+          done();
+        });
+      });
+    });
+
+    it('allow starting after has been stopped', function (done) {
+      var server = new Server();
+      server.start(function () {
+        server.stop(function () {
+          server.start(function () {
+            assert.equal(server._started, true);
+            done();
+          });
+        });
+      });
+    });
   })
 
   context('when advertising', function () {
@@ -128,10 +156,13 @@ describe('Server', function () {
 
       server.start()
 
-      clock.tick(500)
-
-      // server.sock.send should've been called 2 times with 2 unique args
-      assert.equal(server.sock.send.callCount, 2)
+      // tick 900 milliseconds, which is less than 2 times the
+      // adInterval (500) and thus the advertisement should have
+      // been done twice (first time the initial and second after
+      // adInterval has passed)
+      clock.tick(900)
+      // server.sock.send should've been called 4 times (with 2 unique args)
+      assert.equal(server.sock.send.callCount, 4)
 
       // argument order is:
       // message, _, message.length, ssdp port, ssdp host
@@ -200,8 +231,9 @@ describe('Server', function () {
 
       server.stop()
 
-      // server.sock.send should've been called 2 times with 2 unique args
-      assert.equal(socket.send.callCount, 2)
+      // server.sock.send should've been called once with
+      // the byebye message
+      assert.equal(socket.send.callCount, 1)
 
       // argument order is:
       // message, _, message.length, ssdp port, ssdp host
