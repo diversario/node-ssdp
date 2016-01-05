@@ -66,8 +66,6 @@ Take a look at `example` directory as well to see examples or client and server.
 
 SSDP constructor accepts an optional configuration object and an optional initialized socket. At the moment, the following is supported:
 
-- `logLevel` _String_ Specifies log level to print. Possible values: `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`. If not explicitly set in options logging is disabled completely.
-- `logJSON` _Boolean_ Log JSON strings (using [bunyan](https://github.com/trentm/node-bunyan)). Default: `true`.
 - `ssdpSig` _String_ SSDP signature. Default: `node.js/NODE_VERSION UPnP/1.1 node-ssdp/PACKAGE_VERSION`
 - `ssdpIp` _String_ SSDP multicast group. Default: `239.255.255.250`.
 - `ssdpPort` _Number_ SSDP port. Default: `1900`
@@ -81,11 +79,9 @@ SSDP constructor accepts an optional configuration object and an optional initia
 - `allowWildcards` _Boolean_ Accept wildcards (`*`) in `serviceTypes` of `M-SEARCH` packets, e.g. `usn:Belkin:device:**`. Default: `false`
 
 ###Logging
-Aside from `logLevel` configuration option you can set the level via an environment variable `LOG_LEVEL`, which overrides configuration.
 
-At log levels `DEBUG` and `TRACE` module will print call source location.
-
-Use `bunyan` CLI tool to pretty-print JSON logs; running the module with pretty-print enabled is not recommended. 
+You can enable logging via an environment variable `DEBUG`. Set `DEBUG=node-ssdp*` to enable all logs. To enable only client or server logs, use
+`DEBUG=node-ssdp:client` or `DEBUG=node-ssdp:server` respectively.
 
 # License
 

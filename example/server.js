@@ -1,6 +1,5 @@
 var SSDP = require('../index').Server
   , server = new SSDP({
-    logLevel: 'TRACE',
     //unicastHost: '192.168.11.63',
     location: require('ip').address() + '/desc.html'
   })

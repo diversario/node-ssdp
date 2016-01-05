@@ -1,6 +1,5 @@
 var ssdp = require('../index').Client
   , client = new ssdp({
-    logLevel: 'TRACE',
 //    unicastHost: '192.168.11.63'
   })
 

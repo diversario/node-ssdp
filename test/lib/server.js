@@ -248,8 +248,8 @@ describe('Server', function () {
 
       this.sinon.spy(server, 'emit')
 
-      server._logger.warn = function (data, message) {
-        if (message !== 'Unhandled command') return
+      server._logger = function (message, data) {
+        if (message.indexOf('Unhandled command') === -1) return
 
         assert.equal(data.rinfo.address, 1)
         assert.equal(data.rinfo.port, 2)
@@ -331,8 +331,8 @@ describe('Server', function () {
 
       this.sinon.spy(server, 'emit')
 
-      server._logger.trace = function (data, message) {
-        if (message !== 'Unhandled NOTIFY event') return
+      server._logger = function (message, data) {
+        if (message.indexOf('Unhandled NOTIFY event') === -1) return
 
         assert.equal(data.rinfo.address, 1)
         assert.equal(data.rinfo.port, 2)
