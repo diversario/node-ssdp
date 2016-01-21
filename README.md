@@ -77,11 +77,14 @@ SSDP constructor accepts an optional configuration object and an optional initia
 - `description` _String_ Path to description file. Default: `upnp/desc.php`.
 - `ttl` _Number_ Packet TTL. Default: `1800`.
 - `allowWildcards` _Boolean_ Accept wildcards (`*`) in `serviceTypes` of `M-SEARCH` packets, e.g. `usn:Belkin:device:**`. Default: `false`
+- `customLogger` _Function_ A logger function to use instead of the default. The first argument to the function can contain a format string.
 
 ###Logging
 
 You can enable logging via an environment variable `DEBUG`. Set `DEBUG=node-ssdp*` to enable all logs. To enable only client or server logs, use
-`DEBUG=node-ssdp:client` or `DEBUG=node-ssdp:server` respectively.
+`DEBUG=node-ssdp:client` or `DEBUG=node-ssdp:server` respectively. 
+
+Alternatively, you can provide your own `customLogger` function, in which case the `DEBUG` environment variable will be ignored.
 
 # License
 
