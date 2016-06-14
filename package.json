@@ -1,5 +1,5 @@
 {
-  "name": "node-ssdp",
+  "name": "react-native-ssdp",
   "description": "A node.js SSDP client and server library.",
   "keywords": [
     "ssdp",
@@ -9,17 +9,17 @@
     "upnp"
   ],
   "version": "2.7.2",
-  "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
+  "author": ["Ilya Shaisultanov <ilya.shaisultanov@gmail.com>", "Netbeast Staff <staff@netbeast.co>"],
   "dependencies": {
     "debug": "^2.2.0",
     "ip": "^1.0.1"
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/diversario/node-ssdp.git"
+    "url": "git+ssh://git@github.com/netbeast/react-native-ssdp.git"
   },
   "bugs": {
-    "url": "https://github.com/diversario/node-ssdp/issues"
+    "url": "https://github.com/netbeast/react-native-ssdp/issues"
   },
   "main": "./index",
   "engines": {
@@ -36,7 +36,7 @@
     "test": "mocha --recursive test",
     "coverage": "istanbul cover node_modules/.bin/_mocha -- test/lib --recursive"
   },
-  "homepage": "https://github.com/diversario/node-ssdp#readme",
+  "homepage": "https://github.com/netbeast/react-native-ssdp#readme",
   "directories": {
     "example": "example",
     "test": "test"
