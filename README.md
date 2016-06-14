@@ -8,9 +8,10 @@
 
 ```sh
 npm install node-ssdp
+rnmp link
 ```
 
-There is another package called `ssdp` which is the original unmaintained version. Make sure to install `node-ssdp` instead.
+This is a fork of `node-ssdp` that uses `react-native-udp` instead of `dgram` to enable react multicast messaging and plain socket control. The API is the same as in the forked version. 
 
 ## Usage - Client
 
