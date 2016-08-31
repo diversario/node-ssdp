@@ -12,7 +12,7 @@
   "author": ["Ilya Shaisultanov <ilya.shaisultanov@gmail.com>", "Netbeast Staff <staff@netbeast.co>"],
   "dependencies": {
     "debug": "^2.2.0",
-    "ip": "^1.0.1"
+    "react-native-udp": "^1.2.5"
   },
   "repository": {
     "type": "git",
