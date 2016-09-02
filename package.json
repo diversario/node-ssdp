@@ -8,8 +8,11 @@
     "device",
     "upnp"
   ],
-  "version": "2.7.2",
-  "author": ["Ilya Shaisultanov <ilya.shaisultanov@gmail.com>", "Netbeast Staff <staff@netbeast.co>"],
+  "version": "2.7.3",
+  "author": [
+    "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
+    "Netbeast Staff <staff@netbeast.co>"
+  ],
   "dependencies": {
     "debug": "^2.2.0",
     "react-native-udp": "^1.2.5"
