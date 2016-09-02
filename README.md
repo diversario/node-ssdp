@@ -7,7 +7,7 @@
 ## Installation
 
 ```sh
-npm install node-ssdp
+npm install react-native-ssdp
 rnmp link
 ```
 
@@ -16,7 +16,7 @@ This is a fork of `node-ssdp` that uses `react-native-udp` instead of `dgram` to
 ## Usage - Client
 
 ```javascript
-    var Client = require('node-ssdp').Client
+    var Client = require('react-native-ssdp').Client
       , client = new Client();
 
     client.on('response', function (headers, statusCode, rinfo) {
@@ -34,7 +34,7 @@ This is a fork of `node-ssdp` that uses `react-native-udp` instead of `dgram` to
 ## Usage - Server
 
 ```javascript
-    var Server = require('node-ssdp').Server
+    var Server = require('react-native-ssdp').Server
       , server = new Server()
     ;
 
