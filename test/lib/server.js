@@ -31,6 +31,34 @@ describe('Server', function () {
       assert.equal(listeningHandlers[0].name, 'onSocketListening')
     })
 
+    it('binds sockets without interface by default', function () {
+      var server = new Server()
+
+      var ifaces = Object.keys(server.sockets)
+
+      server.start()
+
+      ifaces.forEach(function (iface) {
+        var socket = server.sockets[iface]
+
+        assert.equal(socket.bind.getCall(0).args.length, 2)
+      })
+    })
+
+    it('binds sockets to interface when explicit bind is requested', function () {
+      var server = new Server({explicitSocketBind: true})
+
+      var ifaces = Object.keys(server.sockets)
+
+      server.start()
+
+      ifaces.forEach(function (iface) {
+        var socket = server.sockets[iface]
+
+        assert.equal(socket.bind.getCall(0).args.length, 3)
+      })
+    })
+
     it('does not allow double-binding on the socket', function () {
       var server = new Server()
 

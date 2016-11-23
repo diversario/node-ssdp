@@ -78,6 +78,7 @@ SSDP constructor accepts an optional configuration object and an optional initia
 - `description` _String_ Path to description file. Default: `upnp/desc.php`.
 - `ttl` _Number_ Packet TTL. Default: `1800`.
 - `allowWildcards` _Boolean_ Accept wildcards (`*`) in `serviceTypes` of `M-SEARCH` packets, e.g. `usn:Belkin:device:**`. Default: `false`
+- `explicitSocketBind` _Boolean_ Bind sockets to each discovered interface explicitly instead of relying on the system. Might help with issues with multiple NICs.
 
 ###Logging
 
