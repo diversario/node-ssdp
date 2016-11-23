@@ -8,9 +8,10 @@ var Server = require('../../').Server
 describe('Server', function () {
   context('on start', function () {
     it('binds appropriate listeners to socket', function () {
-      var socket = this.getFakeSocket()
+      var server = new Server()
 
-      var server = new Server(socket)
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       server.start()
 
@@ -31,8 +32,10 @@ describe('Server', function () {
     })
 
     it('does not allow double-binding on the socket', function () {
-      var socket = this.getFakeSocket()
-      var server = new Server(socket)
+      var server = new Server()
+
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       this.sinon.spy(socket, 'on')
 
@@ -44,8 +47,10 @@ describe('Server', function () {
     })
 
     it('adds multicast membership', function (done) {
-      var socket = this.getFakeSocket()
       var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!'}, socket)
+
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       server.start()
 
@@ -63,8 +68,10 @@ describe('Server', function () {
     it('starts advertising every n milliseconds', function () {
       var clock = this.sinon.useFakeTimers()
       var adInterval = 500 // to avoid all other advertise timers
-      var socket = this.getFakeSocket()
-      var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!', 'adInterval': adInterval}, socket)
+      var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!', 'adInterval': adInterval})
+
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       server.addUSN('tv/video')
 
@@ -73,29 +80,33 @@ describe('Server', function () {
       clock.tick(500)
 
       // it's 4 because we call `advertise` immediately after bind. Lame.
-      assert.equal(server.sock.send.callCount, 2)
+      assert.equal(socket.send.callCount, 2)
 
       clock.tick(500)
 
-      assert.equal(server.sock.send.callCount, 4)
+      assert.equal(socket.send.callCount, 4)
     })
   })
 
   context('on stop', function () {
-    it('does not allow multiple _stops', function () {
-      var socket = this.getFakeSocket()
-      var server = new Server(socket)
+    it('does not allow multiple _stops', function (done) {
+      var server = new Server()
+
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       server.start()
 
-      assert(server.sock.bind.calledOnce)
+      assert(socket.bind.calledOnce)
 
       server.stop()
       server.stop()
       server.stop()
 
-      assert(!server.sock)
+      assert(!server.sockets)
       assert.equal(socket.close.callCount, 1)
+
+      done()
     })
   })
 
@@ -104,7 +115,6 @@ describe('Server', function () {
       var clock = this.sinon.useFakeTimers()
       var adInterval = 500 // to avoid all other advertise timers
 
-      var socket = this.getFakeSocket()
       var server = new Server({
         ssdpIp: 'ip',
         ssdpTtl: 'never',
@@ -115,7 +125,10 @@ describe('Server', function () {
         ttl: 'ttl',
         description: 'desc',
         udn: 'device name'
-      }, socket)
+      })
+
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       var _advertise = server.advertise
 
@@ -131,11 +144,11 @@ describe('Server', function () {
       clock.tick(500)
 
       // server.sock.send should've been called 2 times with 2 unique args
-      assert.equal(server.sock.send.callCount, 2)
+      assert.equal(socket.send.callCount, 2)
 
       // argument order is:
       // message, _, message.length, ssdp port, ssdp host
-      var args1 = server.sock.send.getCall(0).args
+      var args1 = socket.send.getCall(0).args
 
       var method1 = server._getMethod(args1[0].toString())
       assert(method1, 'NOTIFY')
@@ -155,7 +168,7 @@ describe('Server', function () {
       var host1 = args1[4]
       assert.equal(host1, 'ip')
 
-      var args2 = server.sock.send.getCall(1).args
+      var args2 = socket.send.getCall(1).args
 
       var method2 = server._getMethod(args2[0].toString())
       assert(method2, 'NOTIFY')
@@ -179,7 +192,6 @@ describe('Server', function () {
     it('sends out correct byebye info', function () {
       var adInterval = 500 // to avoid all other advertise timers
 
-      var socket = this.getFakeSocket()
       var server = new Server({
         ssdpIp: 'ip',
         ssdpTtl: 'never',
@@ -190,7 +202,10 @@ describe('Server', function () {
         ttl: 'ttl',
         description: 'desc',
         udn: 'device name'
-      }, socket)
+      })
+
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       // avoid calling server.start
 
@@ -242,7 +257,9 @@ describe('Server', function () {
     ].join('\r\n')
 
     it('server emits nothing but logs it', function (done) {
-      var server = new Server(this.getFakeSocket())
+      var server = new Server
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       server.start()
 
@@ -259,7 +276,7 @@ describe('Server', function () {
         done()
       }
 
-      server.sock.emit('message', UNKNOWN_CMD, {address: 1, port: 2})
+      socket.emit('message', UNKNOWN_CMD, {address: 1, port: 2})
     })
   })
 
@@ -293,7 +310,9 @@ describe('Server', function () {
     ].join('\r\n')
 
     it('with ssdp:alive server emits `advertise-alive` with data', function (done) {
-      var server = new Server(this.getFakeSocket())
+      var server = new Server
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       server.on('advertise-alive', function (headers) {
         ['HOST', 'NT', 'NTS', 'USN', 'LOCATION', 'CACHE-CONTROL', 'SERVER'].forEach(function (header) {
@@ -305,11 +324,13 @@ describe('Server', function () {
 
       server.start()
 
-      server.sock.emit('message', NOTIFY_ALIVE, {address: 1, port: 2})
+      socket.emit('message', NOTIFY_ALIVE, {address: 1, port: 2})
     })
 
     it('with ssdp:bye server emits `advertise-bye` with data', function (done) {
-      var server = new Server(this.getFakeSocket())
+      var server = new Server
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       server.on('advertise-bye', function (headers) {
         ['HOST', 'NT', 'NTS', 'USN'].forEach(function (header) {
@@ -321,11 +342,13 @@ describe('Server', function () {
 
       server.start()
 
-      server.sock.emit('message', NOTIFY_BYE, {address: 1, port: 2})
+      socket.emit('message', NOTIFY_BYE, {address: 1, port: 2})
     })
 
     it('with unknown NTS server emits nothing but logs it', function (done) {
-      var server = new Server(this.getFakeSocket())
+      var server = new Server
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       server.start()
 
@@ -342,13 +365,15 @@ describe('Server', function () {
         done()
       }
 
-      server.sock.emit('message', NOTIFY_WTF, {address: 1, port: 2})
+      socket.emit('message', NOTIFY_WTF, {address: 1, port: 2})
     })
   })
 
   context('when receiving an M-SEARCH message', function () {
     it('with unknown service type it\'s ignored', function (done) {
-      var server = new Server(this.getFakeSocket())
+      var server = new Server
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       server.advertise = this.sinon.stub() // otherwise it'll call `send`
 
@@ -364,16 +389,18 @@ describe('Server', function () {
         'MX: 3'
       ].join('\r\n')
 
-      server.sock.emit('message', MS_UNKNOWN, {address: 1, port: 2})
+      socket.emit('message', MS_UNKNOWN, {address: 1, port: 2})
 
       assert(server._respondToSearch.calledOnce)
-      assert(server.sock.send.notCalled)
+      assert(socket.send.notCalled)
 
       done()
     })
 
     it('with ssdp:all service type it replies with a unicast 200 OK', function (done) {
-      var server = new Server(this.getFakeSocket())
+      var server = new Server
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
 
       server.advertise = this.sinon.stub() // otherwise it'll call `send`
 
@@ -389,12 +416,12 @@ describe('Server', function () {
         'MX: 3'
       ].join('\r\n')
 
-      server.sock.emit('message', MS_ALL, {address: 1, port: 2})
+      socket.emit('message', MS_ALL, {address: 1, port: 2})
 
       assert(server._respondToSearch.calledOnce)
-      assert(server.sock.send.calledOnce)
+      assert(socket.send.calledOnce)
 
-      var args = server.sock.send.getCall(0).args
+      var args = socket.send.getCall(0).args
         , message = args[0]
         , port = args[3]
         , ip = args[4]
@@ -433,9 +460,9 @@ describe('Server', function () {
     })
 
     it('with matching wildcard it replies with a unicast 200 OK', function (done) {
-      var server = new Server({
-        allowWildcards: true
-      }, this.getFakeSocket())
+      var server = new Server({allowWildcards: true})
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
       server.addUSN('urn:Manufacturer:device:controllee:1')
 
       server.advertise = this.sinon.stub() // otherwise it'll call `send`
@@ -452,12 +479,12 @@ describe('Server', function () {
         'MX: 3'
       ].join('\r\n')
 
-      server.sock.emit('message', MS_ALL, {address: 1, port: 2})
+      socket.emit('message', MS_ALL, {address: 1, port: 2})
 
       assert(server._respondToSearch.calledOnce)
-      assert(server.sock.send.calledOnce)
+      assert(socket.send.calledOnce)
 
-      var args = server.sock.send.getCall(0).args
+      var args = socket.send.getCall(0).args
         , message = args[0]
         , port = args[3]
         , ip = args[4]

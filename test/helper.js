@@ -1,9 +1,10 @@
 var sinon = require('sinon')
   , EE = require('events').EventEmitter
+  , dgram = require('dgram')
 
 beforeEach(function() {
   this.sinon = sinon.sandbox.create();
-  this.getFakeSocket = getFakeSocket.bind(this)
+  this.sinon.stub(dgram, 'createSocket', getFakeSocket.bind(this))
 });
 
 afterEach(function(){
@@ -24,9 +25,12 @@ function getFakeSocket() {
   s.addMembership = this.sinon.stub()
   s.setMulticastTTL = this.sinon.stub()
   s.setMulticastLoopback = this.sinon.stub()
+  s.unref = this.sinon.stub()
 
-  s.bind = function (port, addr, cb) {
-    cb && cb()
+  s.bind = function (/*port, addr, cb*/) {
+    const cb = [].slice.call(arguments).pop()
+
+    if (typeof cb == 'function') cb()
   }
 
   this.sinon.spy(s, 'bind')

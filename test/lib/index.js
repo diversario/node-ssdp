@@ -6,7 +6,7 @@ var SsdpBase = require('../../').Base
 
 describe('Base class', function () {
   context('getMethod helper', function () {
-    it('returns correct method', function () {
+    it('returns correct method, lowercased', function () {
       var ssdp = new SsdpBase
 
       var message = [
@@ -18,7 +18,7 @@ describe('Base class', function () {
 
       var method = ssdp._getMethod(message)
 
-      assert.equal(method, 'BLAH')
+      assert.equal(method, 'blah')
     })
   })
 

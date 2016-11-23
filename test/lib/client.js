@@ -8,7 +8,7 @@ var Client = require('../../').Client
 describe('Client', function () {
   context('when receiving a reply to M-SEARCH', function () {
     it('emit a parsed object', function (done) {
-      var client = new Client(null, this.getFakeSocket())
+      var client = new Client()
 
       var response = [
         'HTTP/1.1 200 OK',
@@ -46,7 +46,9 @@ describe('Client', function () {
 
       client.start()
 
-      client.sock.emit('message', Buffer(response.join('\r\n')))
+      var iface = Object.keys(client.sockets)[0]
+
+      client.sockets[iface].emit('message', Buffer(response.join('\r\n')))
     })
   })
 })

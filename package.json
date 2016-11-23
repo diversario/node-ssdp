@@ -11,9 +11,9 @@
   "version": "3.0.0",
   "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
-    "async": "^1.5.0",
-    "debug": "^2.2.0",
-    "ip": "^1.0.1"
+    "async": "^2.1.4",
+    "debug": "^2.3.3",
+    "ip": "^1.1.4"
   },
   "repository": {
     "type": "git",
@@ -27,11 +27,11 @@
     "node": ">=0.10.0"
   },
   "devDependencies": {
-    "chai": "^3.2.0",
-    "istanbul": "~0.3.21",
-    "mocha": "~2.3.3",
-    "mocha-istanbul": "~0.2.0",
-    "sinon": "~1.17.1"
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.5",
+    "mocha": "^3.1.2",
+    "mocha-istanbul": "^0.3.0",
+    "sinon": "^1.17.6"
   },
   "scripts": {
     "test": "mocha --recursive test",
