@@ -1,4 +1,3 @@
-/*
 MIT License
 
 Copyright (c) 2016 Ilya Shaisultanov
@@ -20,12 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-*/
-
-var path = process.env.SSDP_COV ? './lib-cov/' : './lib/'
-
-module.exports = {
-  Server: require(path + 'server'),
-  Client: require(path + 'client'),
-  Base: require(path + 'index')
-}
