@@ -1,7 +1,11 @@
 var SSDP = require('../index').Server
   , server = new SSDP({
     //unicastHost: '192.168.11.63',
-    location: require('ip').address() + '/desc.html'
+    location: require('ip').address() + '/desc.html',
+    customHeaders: {
+      "fieldName1.domain.com": "fieldValue1",
+      "fieldName2.domain.com": "fieldValue2"
+    }
   })
 
 server.addUSN('upnp:rootdevice')
