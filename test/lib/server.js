@@ -152,7 +152,11 @@ describe('Server', function () {
         ssdpSig: 'signature',
         ttl: 'ttl',
         description: 'desc',
-        udn: 'device name'
+        udn: 'device name',
+        additionalHeaders: {
+          HEADER1: 'header1',
+          HEADER2: 'header2'
+        }
       })
 
       var iface = Object.keys(server.sockets)[0]
@@ -189,6 +193,8 @@ describe('Server', function () {
       assert.equal(headers1.LOCATION, 'location header')
       assert.equal(headers1['CACHE-CONTROL'], 'max-age=1800')
       assert.equal(headers1.SERVER, 'signature')
+      assert.equal(headers1.HEADER1, 'header1')
+      assert.equal(headers1.HEADER2, 'header2')
 
       var port1 = args1[3]
       assert.equal(port1, 1900)
