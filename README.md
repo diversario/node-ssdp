@@ -79,11 +79,16 @@ SSDP constructor accepts an optional configuration object and an optional initia
 - `ttl` _Number_ Packet TTL. Default: `1800`.
 - `allowWildcards` _Boolean_ Accept wildcards (`*`) in `serviceTypes` of `M-SEARCH` packets, e.g. `usn:Belkin:device:**`. Default: `false`
 - `explicitSocketBind` _Boolean_ Bind sockets to each discovered interface explicitly instead of relying on the system. Might help with issues with multiple NICs.
+- `customLogger` _Function_ A logger function to use instead of the default. The first argument to the function can contain a format string.
+- `reuseAddr` _Boolean_ When true `socket.bind()` will reuse the address, even if another process has already bound a socket on it. Default: `true`
+- `suppressRootDeviceAdvertisements` _Boolean_ When true the SSDP server will not advertise the root device (i.e. the bare UDN). In some scenarios this advertisement is not needed. Default: `false`
 
 ###Logging
 
 You can enable logging via an environment variable `DEBUG`. Set `DEBUG=node-ssdp*` to enable all logs. To enable only client or server logs, use
 `DEBUG=node-ssdp:client` or `DEBUG=node-ssdp:server` respectively.
+
+Alternatively, you can provide your own `customLogger` function, in which case the `DEBUG` environment variable will be ignored.
 
 # License
 
