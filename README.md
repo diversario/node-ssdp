@@ -69,7 +69,7 @@ SSDP constructor accepts an optional configuration object and an optional initia
 - `ssdpSig` _String_ SSDP signature. Default: `node.js/NODE_VERSION UPnP/1.1 node-ssdp/PACKAGE_VERSION`
 - `ssdpIp` _String_ SSDP multicast group. Default: `239.255.255.250`.
 - `ssdpPort` _Number_ SSDP port. Default: `1900`
-- `ssdpTtl` _Number_ Multicast TTL. Default: `1`
+- `ssdpTtl` _Number_ Multicast TTL. Default: `4`
 - `adInterval` _Number_ `advertise` event frequency (ms). Default: 10 sec.
 - `unicastHost` _String_ IP address or hostname of server where SSDP service is running. This is used in `HOST` header. Default: `0.0.0.0`.
 - `unicastBindPort` _Number_ Port for the SSDP client service to bind to. Defaults to 0 which uses a randomly selected available port.

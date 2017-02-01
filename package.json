@@ -8,7 +8,7 @@
     "device",
     "upnp"
   ],
-  "version": "3.0.0-beta2",
+  "version": "3.0.0",
   "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
     "async": "^2.1.4",
