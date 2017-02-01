@@ -21,4 +21,4 @@ server.on('advertise-bye', function (heads) {
 })
 
 // start server on all interfaces
-server.start('0.0.0.0')
+server.start()
