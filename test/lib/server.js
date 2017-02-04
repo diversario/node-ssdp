@@ -82,6 +82,14 @@ describe('Server', function () {
       });
     })
 
+    it('returs a promise', function (done) {
+      var server = new Server();
+      server.start().then(function (argument) {
+        assert(true);
+        done();
+      });
+    })
+
     it('adds multicast membership', function (done) {
       var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!'}, socket)
 
