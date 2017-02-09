@@ -10,14 +10,106 @@ Make sure you close all the sockets you open and never try to reopen one already
 
 > This package powers [Yeti Smart Home](https://getyeti.co) and is used in production. It is maintained with our developers's free time, PRs and issues are more than welcome.
 
+This is a fork of `node-ssdp` that uses `react-native-udp` instead of `dgram` to enable react multicast messaging and plain socket control. The API is the same as in the forked version. 
+
 ## Installation
 
-```bash
-yarn buffer react-native-udp react-native-ssdp
-rnmp link # or follow manual linking instructions from react-native-udp
+Unless React Native Version is > 0.29 use rnpm else use react-native link.
+
+```javascript
+npm install --save react-native-udp
+rnpm link
+
+npm install --save react-native-network-info
+rnpm link
+
+npm install react-native-ssdp
 ```
 
+## Usage (Android)
 
+### android/settings.gradle
+
+```gradle
+...
+include ':react-native-udp'
+project(':react-native-udp').projectDir = new File(settingsDir, '../node_modules/react-native-udp/android')
+include ':react-native-network-info'
+project(':react-native-network-info').projectDir = new File(settingsDir, '../node_modules/react-native-network-info/android')
+```
+
+### android/app/build.gradle
+
+```gradle
+...
+dependencies {
+	...
+	compile project(':react-native-udp)
+	compile project(':react-native-network-info')
+}
+```
+	
+### register module in MainActivity.java
+
+#### For RN 0.19.0 and higher
+```java
+import com.tradle.react.UdpSocketsModule;  // <--- import
+import com.pusherman.networkinfo.RNNetworkInfoPackage; // <--- import
+
+public class MainActivity extends ReactActivity {
+   // ...
+    @Override
+    protected List<ReactPackage> getPackages() {
+      return Arrays.<ReactPackage>asList(
+        new MainReactPackage(), // <---- add comma
+		new UdpSocketsModule(), // <---- add package
+        new RNNetworkInfoPackage() // <---------- add package
+      );
+    }
+```
+
+#### For react-native 0.29.0 and higher ( in MainApplication.java )
+```java
+import com.tradle.react.UdpSocketsModule;  // <--- import
+import com.pusherman.networkinfo.RNNetworkInfoPackage; // <--- import
+
+public class MainApplication extends Application implements ReactApplication {
+   // ...
+    @Override
+    protected List<ReactPackage> getPackages() {
+      return Arrays.<ReactPackage>asList(
+        new MainReactPackage(), // <---- add comma
+        new UdpSocketsModule(), // <---- add package
+		new RNNetworkInfoPackage() <---- add package
+      );
+    }
+```
+
+## Usage (iOS)
+
+### Adding with CocoaPads
+
+Add the RNFS pod to your list of applications pods in your podfile, using the path from the Podfile to the installed module.
+
+```
+pod 'RNUDP', :path => './node_modules/react-native-udp'
+pod 'RNNetworkInfo', :path => './node_modules/react-native-network-info'
+```
+
+Install pods as usual:
+```
+pod install
+```
+
+### Adding manually in Xcode
+
+In XCode, in the project navigator, right click Libraries ➜ Add Files to [your project's name] Go to node_modules ➜ react-native-fs and add the .xcodeproj file
+
+In XCode, in the project navigator, select your project. Add the `lib*.a` from the RNFS project to your project's Build Phases ➜ Link Binary With Libraries. Click the .xcodeproj file you added before in the project navigator and go the Build Settings tab. Make sure 'All' is toggled on (instead of 'Basic'). Look for Header Search Paths and make sure it contains both `$(SRCROOT)/../react-native/React` and `$(SRCROOT)/../../React` - mark both as recursive.
+
+Run your project (Cmd+R)
+
+**Note:** Library uses these installed native_modules internally for sockets communication.
 
 ## Usage - Client
 
