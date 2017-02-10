@@ -1,8 +1,6 @@
 # SSDP fork for React Native from node
 
-This is a fork of `node-ssdp` that uses `react-native-udp` instead of `dgram` to enable react multicast messaging and plain socket control. The API is the same as in the forked version. Make sure you properly install and link [react-native-udp](https://github.com/tradle/react-native-udp) and set the `Buffer` variable as global or install the browser-compatible npm buffer package.
-
-Make sure you close all the sockets you open and never try to reopen one already open, mobile OSs and React Native are very aggresive both with security and performance, so a misuse could kill your process.
+This is a fork of `node-ssdp` that uses `react-native-udp` instead of `dgram` to enable react multicast messaging and plain socket control. The API is the same as in the forked version.
 
 <a href="https://getyeti.co" target="_blank">
    <img alt="works with yeti" src="https://github.com/netbeast/react-native-dial/raw/master/works-with-yeti.png" width="100" />
@@ -10,21 +8,23 @@ Make sure you close all the sockets you open and never try to reopen one already
 
 > This package powers [Yeti Smart Home](https://getyeti.co) and is used in production. It is maintained with our developers's free time, PRs and issues are more than welcome.
 
-This is a fork of `node-ssdp` that uses `react-native-udp` instead of `dgram` to enable react multicast messaging and plain socket control. The API is the same as in the forked version. 
-
 ## Installation
 
 Unless React Native Version is > 0.29 use rnpm else use react-native link.
 
 ```javascript
-npm install --save react-native-udp
-rnpm link
-
-npm install --save react-native-network-info
-rnpm link
-
 npm install react-native-ssdp
+rnpm link
 ```
+
+Make sure you set `Buffer` as global in `react-native-udp`'s UdpSockets.js (noted filename end with letter s)
+
+```javascript
+global.Buffer = global.Buffer || require('buffer').Buffer
+```
+
+## Things to take note
+Make sure you close all the sockets you open and never try to reopen one already open, mobile OSs and React Native are very aggresive both with security and performance, so a misuse could kill your process.
 
 ## Usage (Android)
 

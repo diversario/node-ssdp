@@ -14,7 +14,9 @@
     "Netbeast Staff <staff@netbeast.co>"
   ],
   "dependencies": {
+    "buffer": "^5.0.5",
     "debug": "^2.2.0",
+    "react-native-network-info": "^1.0.0",
     "react-native-udp": "^1.2.5"
   },
   "repository": {
