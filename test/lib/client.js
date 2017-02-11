@@ -2,14 +2,48 @@ require('../helper')
 var moduleVersion = require('../../package.json').version
 
 var expect = require('chai').expect
+var assert = require('assert')
 
 var Client = require('../../').Client
 
 describe('Client', function () {
-  context('when receiving a reply to M-SEARCH', function () {
-    it('emit a parsed object', function (done) {
-      var client = new Client()
+  context('start', function() {
+    var client;
+    beforeEach(function() {
+      client = new Client()
+    })
 
+    afterEach(function() {
+      client.stop();
+    })
+
+    it('takes callback', function (done) {
+      client.start(function() {
+        assert(true);
+        done();
+      });
+    });
+
+    it('returs a promise', function (done) {
+      client.start().then(function () {
+        assert(true);
+        done()
+      });
+    });
+  });
+
+
+  context('when receiving a reply to M-SEARCH', function () {
+    var client;
+    beforeEach(function() {
+      client = new Client()
+    })
+
+    afterEach(function() {
+      client.stop()
+    })
+
+    it('emit a parsed object', function (done) {
       var response = [
         'HTTP/1.1 200 OK',
         'ST: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5',
