@@ -74,6 +74,22 @@ describe('Server', function () {
       assert.equal(socket.on.callCount, 3)
     })
 
+    it('takes optional callback', function (done) {
+      var server = new Server();
+      server.start(function (argument) {
+        assert(true);
+        done();
+      });
+    })
+
+    it('returs a promise', function (done) {
+      var server = new Server();
+      server.start().then(function (argument) {
+        assert(true);
+        done();
+      });
+    })
+
     it('adds multicast membership', function (done) {
       var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!'}, socket)
 

@@ -12,6 +12,7 @@
   "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
     "async": "^2.1.4",
+    "bluebird": "^3.4.7",
     "debug": "^2.3.3",
     "ip": "^1.1.4"
   },
