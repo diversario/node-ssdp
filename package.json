@@ -8,7 +8,7 @@
     "device",
     "upnp"
   ],
-  "version": "2.9.0",
+  "version": "2.9.1",
   "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
     "debug": "^2.2.0",
