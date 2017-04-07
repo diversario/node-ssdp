@@ -61,7 +61,7 @@ There is another package called `ssdp` which is the original unmaintained versio
 
 Take a look at `example` directory as well to see examples or client and server.
 
-##Configuration
+## Configuration
 `new SSDP([options, [socket]])`
 
 SSDP constructor accepts an optional configuration object and an optional initialized socket. At the moment, the following is supported:
@@ -83,7 +83,7 @@ SSDP constructor accepts an optional configuration object and an optional initia
 - `reuseAddr` _Boolean_ When true `socket.bind()` will reuse the address, even if another process has already bound a socket on it. Default: `true`
 - `suppressRootDeviceAdvertisements` _Boolean_ When true the SSDP server will not advertise the root device (i.e. the bare UDN). In some scenarios this advertisement is not needed. Default: `false`
 
-###Logging
+### Logging
 
 You can enable logging via an environment variable `DEBUG`. Set `DEBUG=node-ssdp*` to enable all logs. To enable only client or server logs, use
 `DEBUG=node-ssdp:client` or `DEBUG=node-ssdp:server` respectively.
