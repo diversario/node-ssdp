@@ -44,7 +44,7 @@ project(':react-native-network-info').projectDir = new File(settingsDir, '../nod
 ...
 dependencies {
 	...
-	compile project(':react-native-udp)
+	compile project(':react-native-udp')
 	compile project(':react-native-network-info')
 }
 ```
