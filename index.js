@@ -1,3 +1,5 @@
+import { try } from '../../Library/Caches/typescript/2.6/node_modules/@types/bluebird';
+
 /*
 MIT License
 
@@ -24,9 +26,9 @@ SOFTWARE.
 
 if ( process.env.SSDP_COV ) {
   module.exports = {
-    Server: require('./lib-cov/server'),
-    Client: require('./lib-cov/client'),
-    Base: require('./lib-cov/index')
+    Server: require.resolve('./lib-cov/server'),
+    Client: require.resolve('./lib-cov/client'),
+    Base: require.resolve('./lib-cov/index')
   }
 } else {
   module.exports = {
