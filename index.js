@@ -1,5 +1,3 @@
-import { try } from '../../Library/Caches/typescript/2.6/node_modules/@types/bluebird';
-
 /*
 MIT License
 
@@ -24,17 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-if ( process.env.SSDP_COV ) {
+if (process.env.SSDP_COV) {
   module.exports = {
-    Server: require.resolve('./lib-cov/server'),
-    Client: require.resolve('./lib-cov/client'),
-    Base: require.resolve('./lib-cov/index')
-  }
+    Server: require.resolve("./lib-cov/server"),
+    Client: require.resolve("./lib-cov/client"),
+    Base: require.resolve("./lib-cov/index")
+  };
 } else {
   module.exports = {
-    Server: require('./lib/server'),
-    Client: require('./lib/client'),
-    Base: require('./lib/index')
-  }
+    Server: require("./lib/server"),
+    Client: require("./lib/client"),
+    Base: require("./lib/index")
+  };
 }
-
