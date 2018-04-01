@@ -1,0 +1,26 @@
+{
+  "variables": {
+    "ssh-pem": ""
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "profile": "terraform",
+    "region": "us-west-1",
+    "source_ami": "ami-925144f2",
+    "instance_type": "t2.micro",
+    "ssh_username": "ubuntu",
+    "ssh_private_key_file": "{{ user `ssh-pem` }}",
+    "ssh_keypair_name": "terraform",
+    "ami_name": "node-ssdp-{{timestamp}}",
+    "tags": {
+      "Name": "packer-node-ssdp-{{timestamp}}"
+    }
+  }],
+  "provisioners": [
+    {
+      "type": "shell",
+      "script": "prepare_instance.sh"
+    }
+  ]
+}
+
