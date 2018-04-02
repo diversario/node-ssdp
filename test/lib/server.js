@@ -683,6 +683,8 @@ describe('Server', function () {
       done()
     })
 
+    it('sets LOCATION dynamically when location object is passed in options')
+
     it('with matching wildcard it replies with a unicast 200 OK', function (done) {
       var server = new Server({allowWildcards: true})
       var iface = Object.keys(server.sockets)[0]
