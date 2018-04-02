@@ -6,6 +6,18 @@ var moduleVersion = require('../../package.json').version
 var Server = require('../../').Server
 
 describe('Server', function () {
+  context('on construction', function () {
+    it('sets sourcePort to SSDP port by default', function () {
+      var server = new Server()
+      assert.equal(server._sourcePort, 1900)
+    })
+
+    it('preserves user-set sourcePort', function () {
+      var server = new Server({sourcePort: 'wrong port!'})
+      assert.equal(server._sourcePort, 'wrong port!')
+    })
+  })
+
   context('on start', function () {
     it('binds appropriate listeners to socket', function () {
       var server = new Server()
