@@ -1,7 +1,5 @@
 var ssdp = require('../index').Client
-  , client = new ssdp({
-//    unicastHost: '192.168.11.63'
-  })
+  , client = new ssdp({})
 
 client.on('notify', function () {
   //console.log('Got a notification.')
@@ -14,11 +12,11 @@ client.on('response', function inResponse(headers, code, rinfo) {
 client.search('urn:schemas-upnp-org:service:ContentDirectory:1')
 
 // Or maybe if you want to scour for everything after 5 seconds
-setTimeout(function() {
+setInterval(function() {
   client.search('ssdp:all')
 }, 5000)
 
 // And after 10 seconds, you want to stop
-setTimeout(function () {
-  client.stop()
-}, 10000)
+// setTimeout(function () {
+//   client.stop()
+// }, 10000)

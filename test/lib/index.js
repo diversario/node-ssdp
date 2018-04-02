@@ -21,24 +21,4 @@ describe('Base class', function () {
       assert.equal(method, 'blah')
     })
   })
-
-  context('getHeaders helper', function () {
-    it('returns correct headers', function () {
-      var ssdp = new SsdpBase
-
-      var message = [
-        'BLAH URI HTTP/1.1',
-        'SOMETHING: or other',
-        'AND: more',
-        'but this one is not a real header so pass on it'
-      ].join('\r\n')
-
-      var headers = ssdp._getHeaders(message)
-
-      assert.equal(Object.keys(headers).length, 2)
-
-      assert.equal(headers.SOMETHING, 'or other')
-      assert.equal(headers.AND, 'more')
-    })
-  })
 })
