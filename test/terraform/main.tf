@@ -71,7 +71,7 @@ resource "aws_network_interface_attachment" "node-ssdp-eni-attachment-1" {
   count = "${var.instance-count}"
 
   instance_id          = "${element(aws_instance.node-ssdp-2.*.id, count.index)}"
-  network_interface_id = "${element(aws_network_interface.node-ssdp-eni-2.*.id, count.index)}"
+  network_interface_id = "${element(aws_network_interface.node-ssdp-eni-1.*.id, count.index)}"
   device_index         = 1
 }
 
@@ -86,7 +86,7 @@ resource "aws_network_interface_attachment" "node-ssdp-eni-attachment-2" {
   count = "${var.instance-count}"
 
   instance_id          = "${element(aws_instance.node-ssdp-1.*.id, count.index)}"
-  network_interface_id = "${element(aws_network_interface.node-ssdp-eni-1.*.id, count.index)}"
+  network_interface_id = "${element(aws_network_interface.node-ssdp-eni-2.*.id, count.index)}"
   device_index         = 1
 }
 
