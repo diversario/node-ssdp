@@ -1,3 +1,5 @@
+.terraform
+*.tfstate*
 .project
 *~
 *.csv
@@ -5,7 +7,7 @@
 node_modules/*
 !node_modules/fc.lib.*/
 atlassian-ide-plugin.xml
-.idea/
+.*idea/
 *.log
 .settings
 node_modules
@@ -15,3 +17,4 @@ coverage/
 .coveralls.yml
 reports/
 nbproject
+.vscode
