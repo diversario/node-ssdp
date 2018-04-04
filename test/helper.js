@@ -4,7 +4,7 @@ var sinon = require('sinon')
 
 beforeEach(function() {
   this.sinon = sinon.sandbox.create();
-  this.sinon.stub(dgram, 'createSocket', getFakeSocket.bind(this))
+  this.sinon.stub(dgram, 'createSocket').callsFake(getFakeSocket.bind(this))
 });
 
 afterEach(function(){
@@ -28,14 +28,17 @@ function getFakeSocket() {
   s.unref = this.sinon.stub()
 
   s.bind = function (/*port, addr, cb*/) {
-    const cb = [].slice.call(arguments).pop()
+    var cb = [].slice.call(arguments).pop()
 
     if (typeof cb == 'function') cb()
   }
 
   this.sinon.spy(s, 'bind')
 
-  s.send = this.sinon.stub()
+  s.send = this.sinon.stub().callsFake(function () {
+    s.emit('_send_called')
+  })
+
   s.close = this.sinon.stub()
 
   return s

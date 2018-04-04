@@ -1,7 +1,9 @@
 require('../helper')
 
 var assert = require('chai').assert
+var expect = require('chai').expect
 var ip = require('ip')
+var os = require('os')
 
 var moduleVersion = require('../../package.json').version
 var Server = require('../../').Server
@@ -189,7 +191,7 @@ describe('Server', function () {
 
       var _advertise = server.advertise
 
-      this.sinon.stub(server, 'advertise', function (alive) {
+      this.sinon.stub(server, 'advertise').callsFake(function (alive) {
         if (alive === false) return
         _advertise.call(server)
       })
@@ -270,7 +272,7 @@ describe('Server', function () {
 
       var _advertise = server.advertise
 
-      this.sinon.stub(server, 'advertise', function (alive) {
+      this.sinon.stub(server, 'advertise').callsFake(function (alive) {
         if (alive === false) return
         _advertise.call(server)
       })
@@ -352,7 +354,7 @@ describe('Server', function () {
 
       var _advertise = server.advertise
 
-      this.sinon.stub(server, 'advertise', function (alive) {
+      this.sinon.stub(server, 'advertise').callsFake(function (alive) {
         if (alive === false) return
         _advertise.call(server)
       })
@@ -683,7 +685,136 @@ describe('Server', function () {
       done()
     })
 
-    it('sets LOCATION dynamically when location object is passed in options')
+    it('sets LOCATION dynamically per interface when location object is passed in options', function (done) {
+      this.sinon.stub(os, 'networkInterfaces').returns({
+        en0:
+          [
+            {
+              address: 'fe80::95:be02:727f:9f4a',
+              netmask: 'ffff:ffff:ffff:ffff::',
+              family: 'IPv6',
+              mac: 'dc:a9:04:73:b2:b8',
+              scopeid: 1,
+              internal: false
+            },
+            {
+              address: '192.168.1.1',
+              netmask: '255.255.255.0',
+              family: 'IPv4',
+              mac: 'dc:a9:04:73:b2:b8',
+              internal: false
+            }
+          ],
+        en1:
+          [
+            {
+              address: 'ff80::11:be02:727f:9f88',
+              netmask: 'ffff:ffff:ffff:ffff::',
+              family: 'IPv6',
+              mac: 'dc:a9:04:73:b2:b8',
+              scopeid: 12,
+              internal: false
+            },
+            {
+              address: '192.168.1.2',
+              netmask: '255.255.255.0',
+              family: 'IPv4',
+              mac: 'dc:a9:04:73:b2:b8',
+              internal: false
+            }
+          ]
+      })
+
+      var server = new Server({
+        location: {
+          port: 123,
+          path: '/hello/there'
+        }
+      })
+
+      var iface = Object.keys(server.sockets)[0]
+      var socket = server.sockets[iface]
+
+      var iface2 = Object.keys(server.sockets)[1]
+      var socket2 = server.sockets[iface2]
+
+      var sockets = {
+        1: socket,
+        2: socket2
+      }
+
+      server.advertise = this.sinon.stub() // otherwise it'll call `send`
+
+      server.start()
+
+      os.networkInterfaces.restore()
+
+      this.sinon.spy(server, '_respondToSearch')
+
+      var MS_ALL = [
+        'M-SEARCH * HTTP/1.1',
+        'HOST: 239.255.255.250:1900',
+        'ST: ssdp:all',
+        'MAN: "ssdp:discover"',
+        'MX: 3'
+      ].join('\r\n')
+
+      var socket_calls = 0
+
+      function makeAssertions() {
+        if (++socket_calls != 2) return
+
+        assert(server._respondToSearch.calledOnce)
+
+        expect(sockets['1'].send.calledOnce).to.be.true
+        expect(sockets['2'].send.calledOnce).to.be.true;
+
+        [1, 2].forEach(function (sock) {
+
+          var args = sockets[sock].send.getCall(0).args
+            , message = args[0]
+            , port = args[3]
+            , ip = args[4]
+
+          assert(Buffer.isBuffer(message))
+          assert.equal(port, 2)
+          assert.equal(ip, 1)
+
+          var expectedMessage = [
+            'HTTP/1.1 200 OK',
+            'ST: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5',
+            'USN: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5',
+            'LOCATION: http://' + '192.168.1.' + sock + ':123/hello/there',
+            'CACHE-CONTROL: max-age=1800',
+            //'DATE: Fri, 30 May 2014 15:07:26 GMT', we'll test for this separately
+            'SERVER: node.js/' + process.versions.node + ' UPnP/1.1 node-ssdp/' + moduleVersion,
+            'EXT: ' // note the space
+          ]
+
+          message = message.toString().split('\r\n')
+
+          var filteredMessage = message.filter(function (header) {
+            return !/^DATE/.test(header) && header !== ''
+          })
+
+          assert.deepEqual(filteredMessage.sort(), expectedMessage.sort())
+
+          var dateHeader = message.filter(function (header) {
+            return /^DATE/.test(header)
+          })[0]
+
+          // should look like UTC string
+          assert(/\w+, \d+ \w+ \d+ [\d:]+ GMT/.test(dateHeader))
+        })
+
+        done()
+      }
+
+      sockets['1'].on('_send_called', function() { makeAssertions() })
+      sockets['2'].on('_send_called', function() { makeAssertions() })
+
+      socket.emit('message', MS_ALL, {address: 1, port: 2})
+    })
 
     it('with matching wildcard it replies with a unicast 200 OK', function (done) {
       var server = new Server({allowWildcards: true})

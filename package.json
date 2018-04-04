@@ -11,11 +11,14 @@
   "version": "3.2.5",
   "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
-    "async": "^2.1.4",
-    "bluebird": "^3.4.7",
-    "debug": "^2.3.3",
-    "extend": "^3.0.0",
-    "ip": "^1.1.4"
+    "async": "^2.6.0",
+    "bluebird": "^3.5.1",
+    "chai": "^4.1.2",
+    "debug": "^3.1.0",
+    "extend": "^3.0.1",
+    "ip": "^1.1.5",
+    "mocha": "^3.5.3",
+    "sinon": "^4.5.0"
   },
   "repository": {
     "type": "git",
