@@ -83,7 +83,7 @@ const server = new Server({...})
 ```
 
 - `location` _String_ URL pointing to description of your service, or a function which returns that URL
-- `location` _Object_ For cases where there are multiple network interfaces or IP of the host isn't known in advance, it's possible to specify location in this manner:
+- `location` _Object_ For cases where there are multiple network interfaces or IP of the host isn't known in advance, it's possible to specify location as an object. Host will be set to the IP of the responding interface.
   - `location.protocol` _String_ Location protocol, defaults to `http://`
   - `location.port` _Number_ Location port. No default.
   - `location.path` _String_ Location path. No default.
