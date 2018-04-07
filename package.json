@@ -6,19 +6,18 @@
     "multicast",
     "media",
     "device",
-    "upnp"
+    "upnp",
+    "chromecast",
+    "iot"
   ],
-  "version": "3.2.5",
+  "version": "3.3.0",
   "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
     "async": "^2.6.0",
     "bluebird": "^3.5.1",
-    "chai": "^4.1.2",
     "debug": "^3.1.0",
     "extend": "^3.0.1",
-    "ip": "^1.1.5",
-    "mocha": "^3.5.3",
-    "sinon": "^4.5.0"
+    "ip": "^1.1.5"
   },
   "repository": {
     "type": "git",
@@ -32,14 +31,14 @@
     "node": ">=0.10.0"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
+    "chai": "^4.1.2",
     "istanbul": "^0.4.5",
-    "mocha": "^3.1.2",
+    "mocha": "^5.0.5",
     "mocha-istanbul": "^0.3.0",
-    "sinon": "^1.17.6"
+    "sinon": "^4.5.0"
   },
   "scripts": {
-    "test": "mocha --recursive test",
+    "test": "mocha --exit --recursive test",
     "coverage": "istanbul cover node_modules/.bin/_mocha -- test/lib --recursive"
   },
   "homepage": "https://github.com/diversario/node-ssdp#readme",
