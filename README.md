@@ -84,9 +84,9 @@ const server = new Server({...})
 
 - `location` _String_ URL pointing to description of your service, or a function which returns that URL
 - `location` _Object_ For cases where there are multiple network interfaces or IP of the host isn't known in advance, it's possible to specify location in this manner:
-    `location.protocol` _String_ Location protocol, defaults to `http://`
-    `location.port` _Number_ Location port. No default.
-    `location.path` _String_ Location path. No default.
+  - `location.protocol` _String_ Location protocol, defaults to `http://`
+  - `location.port` _Number_ Location port. No default.
+  - `location.path` _String_ Location path. No default.
 - `udn` _String_ Unique Device Name. Default: `uuid:f40c2981-7329-40b7-8b04-27f187aecfb5`.
 - `allowWildcards` _Boolean_ Accept wildcards (`*`) in `serviceTypes` of `M-SEARCH` packets, e.g. `usn:Belkin:device:**`. Default: `false`
 - `interfaces` _String[]_ List of interfaces to explicitly bind. By default, bind to all available interfaces.
