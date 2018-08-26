@@ -24,3 +24,9 @@ server.on('advertise-bye', function (heads) {
 
 // start server on all interfaces
 server.start()
+  .catch(e => {
+    console.log('Failed to start server:', e)
+  })
+  .then(() => {
+    console.log('Server started.')
+  })

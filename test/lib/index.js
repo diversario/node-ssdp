@@ -2,7 +2,13 @@ require('../helper')
 
 var assert = require('assert')
 
-var SsdpBase = require('../../').Base
+let SsdpBase
+
+if (process.env.SSDP_COV) {
+  SsdpBase = require("../../lib-cov/index")
+} else {
+  SsdpBase = require("../../lib/index")
+}
 
 describe('Base class', function () {
   context('getMethod helper', function () {

@@ -4,7 +4,13 @@ var moduleVersion = require('../../package.json').version
 var expect = require('chai').expect
 var assert = require('assert')
 
-var Client = require('../../').Client
+let Client
+
+if (process.env.SSDP_COV) {
+  Client = require("../../lib-cov/client")
+} else {
+  Client = require("../../lib/client")
+}
 
 describe('Client', function () {
   context('start', function() {

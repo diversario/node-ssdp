@@ -6,7 +6,13 @@ var ip = require('ip')
 var os = require('os')
 
 var moduleVersion = require('../../package.json').version
-var Server = require('../../').Server
+let Server
+
+if (process.env.SSDP_COV) {
+  Server = require("../../lib-cov/server")
+} else {
+  Server = require("../../lib/server")
+}
 
 describe('Server', function () {
   context('on construction', function () {

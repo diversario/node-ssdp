@@ -1,13 +1,13 @@
 REPORTER = spec
 
 test:
-	@mocha --recursive --reporter $(REPORTER)
+	./node_modules/.bin/mocha --recursive --reporter $(REPORTER) --exit
 
 coverage:
 	@$(MAKE) clean
 	@mkdir reports
 	@node_modules/.bin/istanbul instrument --output lib-cov lib
-	@ISTANBUL_REPORTERS=lcov SSDP_COV=1 node_modules/.bin/mocha --recursive -R mocha-istanbul -t 20s $(TESTS)
+	@ISTANBUL_REPORTERS=lcov SSDP_COV=1 node_modules/.bin/mocha --recursive -R mocha-istanbul $(TESTS) --exit
 	@mv lcov.info reports
 	@mv lcov-report reports
 	@rm -rf lib-cov coverage
