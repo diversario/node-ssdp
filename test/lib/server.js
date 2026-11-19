@@ -18,6 +18,11 @@ function localIp() {
   }
 }
 
+// One entry of `os.networkInterfaces()`.
+function ipv4(address) {
+  return {address: address, netmask: '255.255.255.0', family: 'IPv4', internal: false}
+}
+
 describe('Server', function () {
   context('on construction', function () {
     it('preserves user-set sourcePort', function () {
@@ -95,10 +100,6 @@ describe('Server', function () {
     })
 
     it('joins the multicast group once on every interface', function () {
-      function ipv4(address) {
-        return {address: address, netmask: '255.255.255.0', family: 'IPv4', internal: false}
-      }
-
       // en0 has three addresses. Linux lists an address that has a label
       // under its own name.
       this.sinon.stub(os, 'networkInterfaces').returns({
@@ -128,6 +129,54 @@ describe('Server', function () {
         assert.equal(socket.setMulticastInterface.callCount, 1)
         assert(socket.setMulticastInterface.calledWith(iface))
       })
+    })
+
+    it('skips an interface that cannot join the multicast group and warns about it', async function () {
+      this.sinon.stub(os, 'networkInterfaces').returns({
+        'en0': [ipv4('192.168.1.1')],
+        'en1': [ipv4('10.0.0.1')]
+      })
+
+      this.sinon.stub(process, 'emitWarning')
+
+      var server = new Server()
+      // cheating but otherwise cannot make the listener fail
+      server._createSockets()
+
+      server._listener.addMembership
+        .withArgs('239.255.255.250', '192.168.1.1')
+        .throws(new Error('addMembership EHOSTUNREACH'))
+
+      await server.start()
+
+      assert(server._listener.addMembership.calledWith('239.255.255.250', '10.0.0.1'))
+
+      assert(process.emitWarning.calledOnce)
+      assert.match(process.emitWarning.getCall(0).args[0], /en0 \(192\.168\.1\.1\).*EHOSTUNREACH/)
+    })
+
+    it('fails when no interface can join the multicast group', async function () {
+      this.sinon.stub(os, 'networkInterfaces').returns({
+        'en0': [ipv4('192.168.1.1')],
+        'en1': [ipv4('10.0.0.1')]
+      })
+
+      this.sinon.stub(process, 'emitWarning')
+
+      var server = new Server()
+      // cheating but otherwise cannot make the listener fail
+      server._createSockets()
+
+      var error = new Error('addMembership EHOSTUNREACH')
+      var listener = server._listener
+
+      listener.addMembership.throws(error)
+
+      var failure = await server.start().then(function () {}, function (e) { return e })
+
+      assert.equal(failure, error)
+      assert(listener.close.calledOnce)
+      assert(!server.sockets)
     })
 
     it('starts advertising every n milliseconds', function () {
