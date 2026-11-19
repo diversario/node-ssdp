@@ -55,7 +55,7 @@ describe('Client', function () {
         'EXT: ' // note the space
       ]
 
-      client.on('response', function (headers, code, rinfo) {
+      client.on('response', function (headers, code) {
         expect(code).to.equal(200)
 
         var expected = {

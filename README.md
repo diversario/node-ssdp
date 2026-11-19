@@ -157,6 +157,7 @@ Alternatively, you can provide your own `customLogger` function, in which case t
 npm test            # unit tests, the network is faked
 npm run coverage    # unit tests with a coverage report
 make test-network   # network tests, needs podman or docker
+npm run lint        # ESLint, finds mistakes in the code
 ```
 
 The network tests send real SSDP packets over multicast. They run in a container and build a small virtual network in it: several machines on one lan, and a machine with two network interfaces between two lans. They show how the library behaves on Linux only.
