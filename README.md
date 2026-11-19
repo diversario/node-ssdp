@@ -112,6 +112,22 @@ You can enable logging via an environment variable `DEBUG`. Set `DEBUG=node-ssdp
 
 Alternatively, you can provide your own `customLogger` function, in which case the `DEBUG` environment variable will be ignored.
 
+## Testing
+
+```sh
+npm test            # unit tests, the network is faked
+npm run coverage    # unit tests with a coverage report
+make test-network   # network tests, needs podman or docker
+```
+
+The network tests send real SSDP packets over multicast. They run in a container and build a small virtual network in it: several machines on one lan, and a machine with two network interfaces between two lans. They show how the library behaves on Linux only.
+
+- `KNOWN_BUGS=1 make test-network` also runs the tests for bugs that are not fixed yet. Those tests fail.
+- `DEBUG='node-ssdp:*' make test-network` prints the library logs of every machine.
+- `sh test/network/run.sh --grep byebye` passes arguments to mocha.
+
+`test/network/support/lab.js` describes how the virtual network is built.
+
 # License
 
 (The MIT License)

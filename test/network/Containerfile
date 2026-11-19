@@ -1,0 +1,17 @@
+# Image for the network tests.
+#
+# It holds the `ip` tool, which the tests use to create network namespaces,
+# bridges and virtual cables. It also holds the modules from the lockfile.
+# The library and the tests are not in the image: `run.sh` mounts them.
+#
+# The build context is the root of the repository. `.dockerignore` there
+# leaves only the two package files in it.
+FROM docker.io/library/node:26.13.1-alpine
+
+RUN apk add --no-cache iproute2
+
+WORKDIR /work
+
+COPY package.json package-lock.json ./
+
+RUN npm ci

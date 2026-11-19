@@ -1,0 +1,5 @@
+# The only image built here is the one for the network tests
+# (test/network/Containerfile). It needs the list of modules and nothing else.
+*
+!package.json
+!package-lock.json

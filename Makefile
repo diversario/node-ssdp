@@ -1,7 +1,10 @@
 REPORTER = spec
 
 test:
-	./node_modules/.bin/mocha --recursive --reporter $(REPORTER) --exit
+	./node_modules/.bin/mocha --recursive --reporter $(REPORTER) --exit test/lib
+
+test-network:
+	@sh test/network/run.sh
 
 coverage:
 	@npm run coverage
@@ -13,4 +16,4 @@ coveralls: coverage
 clean:
 	@rm -rf coverage
 
-.PHONY: test coverage coveralls clean
+.PHONY: test test-network coverage coveralls clean

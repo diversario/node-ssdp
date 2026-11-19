@@ -36,8 +36,9 @@
     "sinon": "^22.1.0"
   },
   "scripts": {
-    "test": "mocha --exit --recursive test",
-    "coverage": "c8 --reporter=text --reporter=lcov mocha --exit --recursive test"
+    "test": "mocha --exit --recursive test/lib",
+    "test:network": "mocha --exit --timeout 15000 test/network",
+    "coverage": "c8 --reporter=text --reporter=lcov mocha --exit --recursive test/lib"
   },
   "homepage": "https://github.com/diversario/node-ssdp#readme",
   "directories": {

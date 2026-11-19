@@ -1,5 +1,6 @@
 .settings
 .project
+.dockerignore
 /node_modules
 .coveralls.yml
 test/
