@@ -15,8 +15,14 @@ const SSDP_PORT = 1900
 
 let node
 
+// The test process can close the channel while this process still has
+// something to say. Nobody is left to read it, so a failed send is ignored.
+function send (message) {
+  process.send(message, function () {})
+}
+
 function report (event) {
-  process.send({ event })
+  send({ event })
 }
 
 function createSsdp (kind, opts, usns) {
@@ -99,9 +105,9 @@ process.on('message', async ({ id, command, args }) => {
       await node[command](...args)
     }
 
-    process.send({ id })
+    send({ id })
   } catch (error) {
-    process.send({ id, error: error.stack })
+    send({ id, error: error.stack })
   }
 })
 
