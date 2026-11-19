@@ -7,7 +7,8 @@
 //   host  A network namespace. It has one interface for each lan it joins:
 //         `eth0` for the first lan, `eth1` for the second, and so on.
 //   peer  A Node process that runs inside a host. It owns one SSDP server,
-//         one SSDP client or one probe (see `agent.js`).
+//         one SSDP client, one probe, or several servers in cluster workers
+//         (see `agent.js`).
 //
 // This needs Linux, root and the `ip` tool. `test/network/run.sh` starts a
 // container that has all three.
@@ -187,6 +188,19 @@ class Host {
    */
   client (opts) {
     return this._peer('client', opts || {}, [])
+  }
+
+  /**
+   * Creates one process on this host that runs an SSDP server in each of
+   * several cluster workers. `start` starts all of them.
+   *
+   * @param {Object} [opts] Options for the `Server` constructor
+   * @param {String[]} [usns] Passed to `addUSN` of every server
+   * @param {String[]} udns The UDN of each server
+   * @returns {Promise<Peer>}
+   */
+  cluster (opts, usns, udns) {
+    return this._peer('cluster', opts || {}, usns || [], udns)
   }
 
   /**

@@ -32,10 +32,10 @@ describe('Server', function () {
       server.start()
 
       assert(server._listener.bind.calledOnce)
-      assert.equal(server._listener.bind.getCall(0).args[0], 1900)
+      assert.equal(server._listener.bind.getCall(0).args[0].port, 1900)
 
       Object.keys(server.sockets).forEach(function (iface) {
-        assert.equal(server.sockets[iface].bind.getCall(0).args[0], 0)
+        assert.equal(server.sockets[iface].bind.getCall(0).args[0].port, 0)
       })
     })
 
@@ -48,7 +48,7 @@ describe('Server', function () {
       ifaces.forEach(function (iface) {
         var socket = server.sockets[iface]
 
-        assert.equal(socket.bind.getCall(0).args.length, 2)
+        assert.equal(socket.bind.getCall(0).args[0].address, undefined)
       })
     })
 
@@ -61,7 +61,7 @@ describe('Server', function () {
       ifaces.forEach(function (iface) {
         var socket = server.sockets[iface]
 
-        assert.equal(socket.bind.getCall(0).args.length, 3)
+        assert.equal(socket.bind.getCall(0).args[0].address, iface)
       })
     })
 
