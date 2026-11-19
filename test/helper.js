@@ -24,6 +24,7 @@ function getFakeSocket() {
 
   s.addMembership = this.sinon.stub()
   s.setMulticastTTL = this.sinon.stub()
+  s.setMulticastInterface = this.sinon.stub()
   s.setMulticastLoopback = this.sinon.stub()
   s.unref = this.sinon.stub()
 

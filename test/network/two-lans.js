@@ -142,7 +142,7 @@ describe('SSDP on a machine with two network interfaces', function () {
       }
     })
 
-    knownBug('sends ssdp:alive to each lan, with its address on that lan in LOCATION (#102, #109)', function () {
+    it('sends ssdp:alive to each lan, with its address on that lan in LOCATION', function () {
       return checkAliveOnBothLans({})
     })
   })
@@ -200,14 +200,14 @@ describe('SSDP on a machine with two network interfaces', function () {
       assert(both.groups(lan2).includes(GROUP))
     })
 
-    knownBug('sends one search to each lan (#99, #109)', async function () {
+    it('sends one search to each lan', async function () {
       const [searches1, searches2] = await searchesOnBothLans()
 
       assert.deepEqual(searches1.map((packet) => packet.rinfo.address), [both.address(lan1)])
       assert.deepEqual(searches2.map((packet) => packet.rinfo.address), [both.address(lan2)])
     })
 
-    knownBug('finds servers on both lans (#99, #109)', async function () {
+    it('finds servers on both lans', async function () {
       assert.deepEqual(await findServersOnBothLans(), [
         one.address(lan1) + ' ' + UDN + '::' + ROOT,
         two.address(lan2) + ' ' + OTHER_UDN + '::' + ROOT
