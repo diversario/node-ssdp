@@ -3,11 +3,6 @@
 const assert = require('node:assert/strict')
 const { Lab } = require('./support/lab')
 
-// A test for something the library does not do yet. The title names the
-// GitHub issue when there is one. It runs only when KNOWN_BUGS is set, and
-// it fails.
-const knownBug = process.env.KNOWN_BUGS ? it : it.skip
-
 const GROUP = '239.255.255.250'
 const UDN = 'uuid:11111111-1111-1111-1111-111111111111'
 const OTHER_UDN = 'uuid:22222222-2222-2222-2222-222222222222'
@@ -21,9 +16,10 @@ function isNotify (nts) {
   }
 }
 
-// Three machines on one lan. Each has one network interface.
+// Four machines on one lan. Each has one network interface.
+// The interface of `aliased` has three addresses.
 describe('SSDP between machines on one lan', function () {
-  let lab, lan, device, control, third
+  let lab, lan, device, control, third, aliased
 
   before(function () {
     lab = new Lab()
@@ -31,6 +27,10 @@ describe('SSDP between machines on one lan', function () {
     device = lab.addHost([lan])
     control = lab.addHost([lan])
     third = lab.addHost([lan])
+
+    aliased = lab.addHost([lan])
+    aliased.addAddress(lan, lan.prefix + '.101/24')
+    aliased.addAddress(lan, '192.168.77.1/24', aliased.ifname(lan) + ':1')
   })
 
   afterEach(function () {
@@ -193,7 +193,6 @@ describe('SSDP between machines on one lan', function () {
         const alive = await probe.waitFor('packet', (packet) => isNotify('ssdp:alive')(packet) && packet.headers.NT === nt)
 
         assert.equal(alive.rinfo.address, device.address(lan))
-        assert.equal(alive.rinfo.port, 1900)
         assert.equal(alive.headers.HOST, GROUP + ':1900')
         assert.equal(alive.headers.USN, usn)
         assert.equal(alive.headers.LOCATION, 'http://' + device.address(lan) + ':8080/desc.xml')
@@ -257,8 +256,8 @@ describe('SSDP between machines on one lan', function () {
       assert.equal(bye.headers.USN, UDN + '::' + ROOT)
     })
 
-    it('a client that listens on port 1900 emits advertise-alive', async function () {
-      const client = await control.client({ sourcePort: 1900 })
+    it('a client emits advertise-alive', async function () {
+      const client = await control.client()
       await client.start()
 
       const server = await device.server({ udn: UDN, adInterval: 200 }, [ROOT])
@@ -269,14 +268,50 @@ describe('SSDP between machines on one lan', function () {
       assert.equal(alive.rinfo.address, device.address(lan))
     })
 
-    knownBug('a client with default options emits advertise-alive (#78)', async function () {
-      const client = await control.client()
+    // With this port, every socket of the client gets a copy of each NOTIFY.
+    it('a client whose sourcePort is the SSDP port emits advertise-alive once for one NOTIFY', async function () {
+      const client = await control.client({ sourcePort: 1900 })
       await client.start()
 
-      const server = await device.server({ udn: UDN, adInterval: 200 }, [ROOT])
+      const probe = await device.probe()
+
+      const [alives] = await Promise.all([
+        client.during('advertise-alive', 300),
+        probe.send([
+          'NOTIFY * HTTP/1.1',
+          'HOST: ' + GROUP + ':1900',
+          'NT: ' + ROOT,
+          'NTS: ssdp:alive',
+          'USN: ' + UDN + '::' + ROOT
+        ])
+      ])
+
+      assert.equal(alives.length, 1)
+    })
+  })
+
+  context('when another program holds the SSDP port', function () {
+    it('start fails', async function () {
+      const first = await device.server({ udn: UDN, reuseAddr: false })
+      await first.start()
+
+      const second = await device.server({ udn: OTHER_UDN, reuseAddr: false })
+
+      await assert.rejects(second.start(), /EADDRINUSE/)
+    })
+  })
+
+  context('when an interface has several addresses', function () {
+    it('a server starts and answers a search once', async function () {
+      const server = await aliased.server({ udn: UDN, location: { port: 8080, path: '/desc.xml' } }, [ROOT])
       await server.start()
 
-      await client.waitFor('advertise-alive', (event) => event.headers.USN === UDN + '::' + ROOT, 1000)
+      const client = await control.client()
+      const responses = await client.search(ROOT)
+
+      assert.equal(responses.length, 1)
+      assert.equal(responses[0].rinfo.address, aliased.address(lan))
+      assert.equal(responses[0].headers.LOCATION, 'http://' + aliased.address(lan) + ':8080/desc.xml')
     })
   })
 

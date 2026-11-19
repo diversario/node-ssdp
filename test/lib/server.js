@@ -1,7 +1,6 @@
 require('../helper')
 
 var assert = require('chai').assert
-var expect = require('chai').expect
 var os = require('os')
 
 var moduleVersion = require('../../package.json').version
@@ -21,11 +20,6 @@ function localIp() {
 
 describe('Server', function () {
   context('on construction', function () {
-    it('sets sourcePort to SSDP port by default', function () {
-      var server = new Server()
-      assert.equal(server._sourcePort, 1900)
-    })
-
     it('preserves user-set sourcePort', function () {
       var server = new Server({sourcePort: 'wrong port!'})
       assert.equal(server._sourcePort, 'wrong port!')
@@ -33,27 +27,16 @@ describe('Server', function () {
   })
 
   context('on start', function () {
-    it('binds appropriate listeners to socket', function () {
+    it('binds the listener to the SSDP port and the other sockets to any port', function () {
       var server = new Server()
       server.start()
 
-      var iface = Object.keys(server.sockets)[0]
-      var socket = server.sockets[iface]
+      assert(server._listener.bind.calledOnce)
+      assert.equal(server._listener.bind.getCall(0).args[0], 1900)
 
-      var errorHandlers = socket.listeners('error')
-
-      assert.equal(errorHandlers.length, 1)
-      assert.equal(errorHandlers[0].name, 'onSocketError')
-
-      var messageHandlers = socket.listeners('message')
-
-      assert.equal(messageHandlers.length, 1)
-      assert.equal(messageHandlers[0].name, 'onSocketMessage')
-
-      var listeningHandlers = socket.listeners('listening')
-
-      assert.equal(listeningHandlers.length, 1)
-      assert.equal(listeningHandlers[0].name, 'onSocketListening')
+      Object.keys(server.sockets).forEach(function (iface) {
+        assert.equal(server.sockets[iface].bind.getCall(0).args[0], 0)
+      })
     })
 
     it('binds sockets without interface by default', function () {
@@ -84,19 +67,15 @@ describe('Server', function () {
 
     it('does not allow double-binding on the socket', function () {
       var server = new Server()
-      // cheating but otherwise cannot spy on the sockets
-      server._createSockets()
+
+      server.start()
+      server.start()
+      server.start()
 
       var iface = Object.keys(server.sockets)[0]
-      var socket = server.sockets[iface]
 
-      this.sinon.spy(socket, 'on')
-
-      server.start()
-      server.start()
-      server.start()
-
-      assert.equal(socket.on.callCount, 3)
+      assert(server.sockets[iface].bind.calledOnce)
+      assert(server._listener.bind.calledOnce)
     })
 
     it('takes optional callback', function (done) {
@@ -115,25 +94,40 @@ describe('Server', function () {
       });
     })
 
-    it('adds multicast membership', function (done) {
-      var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!'}, socket)
+    it('joins the multicast group once on every interface', function () {
+      function ipv4(address) {
+        return {address: address, netmask: '255.255.255.0', family: 'IPv4', internal: false}
+      }
+
+      // en0 has three addresses. Linux lists an address that has a label
+      // under its own name.
+      this.sinon.stub(os, 'networkInterfaces').returns({
+        'en0': [ipv4('192.168.1.1'), ipv4('192.168.1.2')],
+        'en0:1': [ipv4('192.168.2.1')],
+        'en1': [ipv4('10.0.0.1')]
+      })
+
+      var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!'})
       server.start()
 
-      var iface = Object.keys(server.sockets)[0]
-      var socket = server.sockets[iface]
+      assert.deepEqual(server._listener.addMembership.args, [
+        ['fake ip', '192.168.1.1'],
+        ['fake ip', '10.0.0.1']
+      ])
 
-      socket.emit('listening')
+      var ifaces = Object.keys(server.sockets)
 
-      assert.equal(socket.addMembership.callCount, 1)
-      assert(socket.addMembership.calledWith('fake ip'))
+      assert.deepEqual(ifaces, ['192.168.1.1', '192.168.1.2', '192.168.2.1', '10.0.0.1'])
 
-      assert.equal(socket.setMulticastTTL.callCount, 1)
-      assert(socket.setMulticastTTL.calledWith('never!'))
+      ifaces.forEach(function (iface) {
+        var socket = server.sockets[iface]
 
-      assert.equal(socket.setMulticastInterface.callCount, 1)
-      assert(socket.setMulticastInterface.calledWith(iface))
+        assert.equal(socket.setMulticastTTL.callCount, 1)
+        assert(socket.setMulticastTTL.calledWith('never!'))
 
-      done()
+        assert.equal(socket.setMulticastInterface.callCount, 1)
+        assert(socket.setMulticastInterface.calledWith(iface))
+      })
     })
 
     it('starts advertising every n milliseconds', function () {
@@ -492,8 +486,7 @@ describe('Server', function () {
 
       server.start()
 
-      var iface = Object.keys(server.sockets)[0]
-      var socket = server.sockets[iface]
+      var socket = server._listener
 
       server._logger = function (message, data) {
         if (message.indexOf('Unhandled command') === -1) return
@@ -552,8 +545,7 @@ describe('Server', function () {
 
       server.start()
 
-      var iface = Object.keys(server.sockets)[0]
-      var socket = server.sockets[iface]
+      var socket = server._listener
 
       socket.emit('message', NOTIFY_ALIVE, {address: 1, port: 2})
     })
@@ -571,8 +563,7 @@ describe('Server', function () {
 
       server.start()
 
-      var iface = Object.keys(server.sockets)[0]
-      var socket = server.sockets[iface]
+      var socket = server._listener
 
       socket.emit('message', NOTIFY_BYE, {address: 1, port: 2})
     })
@@ -582,8 +573,7 @@ describe('Server', function () {
 
       server.start()
 
-      var iface = Object.keys(server.sockets)[0]
-      var socket = server.sockets[iface]
+      var socket = server._listener
 
       this.sinon.spy(server, 'emit')
 
@@ -610,8 +600,7 @@ describe('Server', function () {
 
       server.start()
 
-      var iface = Object.keys(server.sockets)[0]
-      var socket = server.sockets[iface]
+      var socket = server._listener
 
       this.sinon.spy(server, '_respondToSearch')
 
@@ -638,8 +627,7 @@ describe('Server', function () {
 
       server.start()
 
-      var iface = Object.keys(server.sockets)[0]
-      var socket = server.sockets[iface]
+      var socket = server._listener
 
       this.sinon.spy(server, '_respondToSearch')
 
@@ -694,7 +682,7 @@ describe('Server', function () {
       done()
     })
 
-    it('sets LOCATION dynamically per interface when location object is passed in options', function (done) {
+    it('replies once, with the address of the interface on the subnet of the sender in LOCATION', function () {
       this.sinon.stub(os, 'networkInterfaces').returns({
         en0:
           [
@@ -717,18 +705,10 @@ describe('Server', function () {
         en1:
           [
             {
-              address: 'ff80::11:be02:727f:9f88',
-              netmask: 'ffff:ffff:ffff:ffff::',
-              family: 'IPv6',
-              mac: 'dc:a9:04:73:b2:b8',
-              scopeid: 12,
-              internal: false
-            },
-            {
-              address: '192.168.1.2',
-              netmask: '255.255.255.0',
+              address: '10.0.0.1',
+              netmask: '255.0.0.0',
               family: 'IPv4',
-              mac: 'dc:a9:04:73:b2:b8',
+              mac: 'dc:a9:04:73:b2:b9',
               internal: false
             }
           ]
@@ -745,20 +725,7 @@ describe('Server', function () {
 
       server.start()
 
-      var iface = Object.keys(server.sockets)[0]
-      var socket = server.sockets[iface]
-
-      var iface2 = Object.keys(server.sockets)[1]
-      var socket2 = server.sockets[iface2]
-
-      var sockets = {
-        1: socket,
-        2: socket2
-      }
-
-      os.networkInterfaces.restore()
-
-      this.sinon.spy(server, '_respondToSearch')
+      var listener = server._listener
 
       var MS_ALL = [
         'M-SEARCH * HTTP/1.1',
@@ -768,61 +735,29 @@ describe('Server', function () {
         'MX: 3'
       ].join('\r\n')
 
-      var socket_calls = 0
+      function locationSentTo(address) {
+        listener.send.resetHistory()
+        listener.emit('message', MS_ALL, {address: address, port: 2})
 
-      function makeAssertions() {
-        if (++socket_calls != 2) return
+        assert(listener.send.calledOnce)
 
-        assert(server._respondToSearch.calledOnce)
+        var args = listener.send.getCall(0).args
 
-        expect(sockets['1'].send.calledOnce).to.be.true
-        expect(sockets['2'].send.calledOnce).to.be.true;
+        assert.equal(args[3], 2)
+        assert.equal(args[4], address)
 
-        [1, 2].forEach(function (sock) {
-
-          var args = sockets[sock].send.getCall(0).args
-            , message = args[0]
-            , port = args[3]
-            , ip = args[4]
-
-          assert(Buffer.isBuffer(message))
-          assert.equal(port, 2)
-          assert.equal(ip, 1)
-
-          var expectedMessage = [
-            'HTTP/1.1 200 OK',
-            'ST: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5',
-            'USN: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5',
-            'LOCATION: http://' + '192.168.1.' + sock + ':123/hello/there',
-            'CACHE-CONTROL: max-age=1800',
-            //'DATE: Fri, 30 May 2014 15:07:26 GMT', we'll test for this separately
-            'SERVER: node.js/' + process.versions.node + ' UPnP/1.1 node-ssdp/' + moduleVersion,
-            'EXT: ' // note the space
-          ]
-
-          message = message.toString().split('\r\n')
-
-          var filteredMessage = message.filter(function (header) {
-            return !/^DATE/.test(header) && header !== ''
-          })
-
-          assert.deepEqual(filteredMessage.sort(), expectedMessage.sort())
-
-          var dateHeader = message.filter(function (header) {
-            return /^DATE/.test(header)
-          })[0]
-
-          // should look like UTC string
-          assert(/\w+, \d+ \w+ \d+ [\d:]+ GMT/.test(dateHeader))
-        })
-
-        done()
+        return server._getHeaders(args[0].toString()).LOCATION
       }
 
-      sockets['1'].on('_send_called', function() { makeAssertions() })
-      sockets['2'].on('_send_called', function() { makeAssertions() })
+      assert.equal(locationSentTo('192.168.1.77'), 'http://192.168.1.1:123/hello/there')
+      assert.equal(locationSentTo('10.20.30.40'), 'http://10.0.0.1:123/hello/there')
 
-      socket.emit('message', MS_ALL, {address: 1, port: 2})
+      // no interface is on the subnet of this sender, so the first one is used
+      assert.equal(locationSentTo('172.16.0.5'), 'http://192.168.1.1:123/hello/there')
+
+      Object.keys(server.sockets).forEach(function (iface) {
+        assert(server.sockets[iface].send.notCalled)
+      })
     })
 
     it('with matching wildcard it replies with a unicast 200 OK', function (done) {
@@ -833,8 +768,7 @@ describe('Server', function () {
 
       server.start()
 
-      var iface = Object.keys(server.sockets)[0]
-      var socket = server.sockets[iface]
+      var socket = server._listener
 
       this.sinon.spy(server, '_respondToSearch')
 
@@ -906,8 +840,7 @@ describe('Server', function () {
 
       server.start()
 
-      var iface = Object.keys(server.sockets)[0]
-      var socket = server.sockets[iface]
+      var socket = server._listener
 
       this.sinon.spy(server, '_respondToSearch')
 

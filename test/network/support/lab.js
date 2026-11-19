@@ -136,6 +136,20 @@ class Host {
   }
 
   /**
+   * Gives the interface to the lan one more IPv4 address.
+   *
+   * @param lan
+   * @param {String} cidr For example `192.168.7.1/24`
+   * @param {String} [label] Linux then lists the address under this
+   *   interface name. It is the real name, a colon and a suffix: `eth0:1`.
+   */
+  addAddress (lan, cidr, label) {
+    const args = ['-n', this.name, 'addr', 'add', cidr, 'dev', this.ifname(lan)]
+
+    ip(...(label ? args.concat('label', label) : args))
+  }
+
+  /**
    * IPv4 multicast groups this host has joined on its interface to the lan.
    */
   groups (lan) {
@@ -144,6 +158,14 @@ class Host {
       .map((line) => line.trim().split(/\s+/))
       .filter((words) => words[0] === 'inet')
       .map((words) => words[1])
+  }
+
+  /**
+   * Changes a kernel setting of this host,
+   * for example `net.ipv4.igmp_max_memberships`.
+   */
+  sysctl (name, value) {
+    ip('netns', 'exec', this.name, 'sysctl', '-q', '-w', name + '=' + value)
   }
 
   /**

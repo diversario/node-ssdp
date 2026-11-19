@@ -1,8 +1,8 @@
 var ssdp = require('../index').Client
   , client = new ssdp({})
 
-client.on('notify', function () {
-  //console.log('Got a notification.')
+client.on('advertise-alive', function (headers, rinfo) {
+  //console.log('A device announced itself.')
 })
 
 client.on('response', function inResponse(headers, code, rinfo) {
