@@ -11,7 +11,7 @@
     "iot"
   ],
   "version": "5.0.0",
-  "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
+  "author": "Ilya Shaisultanov <github@diversario.com>",
   "dependencies": {
     "async": "^3.2.6",
     "bluebird": "^3.7.2",
