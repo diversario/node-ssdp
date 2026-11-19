@@ -27,7 +27,7 @@ Check these points in your code and on your network:
   })
   ```
 
-- **`start()` can fail.** When a socket cannot be bound, `start()` rejects its promise and calls its callback with the error. In version 4 it never finished. Handle the error.
+- **`start()` can fail.** When a socket cannot be bound, `start()` rejects its promise and calls its callback with the error. In version 4 it never finished. It also fails when `stop()` is called before the start is done. Handle the error.
 
 - **A client uses UDP port 1900.** It listens there for NOTIFY messages and emits `advertise-alive` and `advertise-bye`. In version 4 a client with default options never got these events. A client cannot start when another program holds port 1900 and does not allow address reuse.
 
