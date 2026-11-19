@@ -1,14 +1,32 @@
 'use strict'
 
 // Runs inside one host of the virtual network (see `lab.js`). It owns one
-// SSDP server, one SSDP client or one probe.
+// SSDP server, one SSDP client, one probe, or several SSDP servers that each
+// run in a cluster worker.
 //
 // The test process sends commands over the IPC channel. This process answers
 // every command, and reports every SSDP event or packet it sees.
 
+const cluster = require('node:cluster')
 const dgram = require('node:dgram')
 const os = require('node:os')
 const ssdp = require('../../..')
+
+// A cluster worker of this agent. It runs one server and tells the agent
+// whether the server started.
+if (cluster.isWorker) {
+  const { opts, usns } = JSON.parse(process.env.SSDP_SERVER)
+  const server = new ssdp.Server(opts)
+
+  usns.forEach((usn) => server.addUSN(usn))
+
+  server.start().then(
+    () => process.send({}),
+    (error) => process.send({ error: error.stack })
+  )
+
+  return
+}
 
 const SSDP_GROUP = '239.255.255.250'
 const SSDP_PORT = 1900
@@ -97,10 +115,43 @@ function createProbe () {
   }
 }
 
+/**
+ * One SSDP server in each of several cluster workers of this process.
+ * `udns` has the UDN of each server.
+ */
+function createCluster (opts, usns, udns) {
+  let workers = []
+
+  return {
+    start () {
+      workers = udns.map((udn) => {
+        return cluster.fork({ SSDP_SERVER: JSON.stringify({ opts: Object.assign({}, opts, { udn }), usns }) })
+      })
+
+      return Promise.all(workers.map((worker) => new Promise((resolve, reject) => {
+        worker.once('message', (message) => {
+          if (message.error) reject(new Error(message.error))
+          else resolve()
+        })
+
+        worker.once('exit', (code) => reject(new Error('A worker exited with code ' + code)))
+      })))
+    },
+
+    stop () {
+      workers.forEach((worker) => worker.kill())
+    }
+  }
+}
+
 process.on('message', async ({ id, command, args }) => {
   try {
     if (command === 'create') {
-      node = args[0] === 'probe' ? createProbe() : createSsdp(...args)
+      const kind = args[0]
+
+      if (kind === 'probe') node = createProbe()
+      else if (kind === 'cluster') node = createCluster(...args.slice(1))
+      else node = createSsdp(...args)
     } else {
       await node[command](...args)
     }

@@ -315,6 +315,21 @@ describe('SSDP between machines on one lan', function () {
     })
   })
 
+  context('when servers run in cluster workers of one process', function () {
+    it('every server starts and answers a search', async function () {
+      const servers = await device.cluster({}, [ROOT], [UDN, OTHER_UDN])
+      await servers.start()
+
+      const client = await control.client()
+      const responses = await client.search(ROOT)
+
+      assert.deepEqual(
+        responses.map((response) => response.headers.USN).sort(),
+        [UDN + '::' + ROOT, OTHER_UDN + '::' + ROOT]
+      )
+    })
+  })
+
   context('multicast group membership', function () {
     it('a server joins the SSDP group when it starts and leaves it when it stops', async function () {
       const server = await device.server({ udn: UDN })
