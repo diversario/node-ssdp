@@ -3,6 +3,7 @@
 .dockerignore
 .github/
 eslint.config.js
+mise.toml
 /node_modules
 .coveralls.yml
 test/
