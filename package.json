@@ -26,6 +26,11 @@
     "url": "https://github.com/diversario/node-ssdp/issues"
   },
   "main": "./index",
+  "files": [
+    "index.js",
+    "lib",
+    "example"
+  ],
   "engines": {
     "node": ">=22.12.0"
   },
