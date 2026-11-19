@@ -13,6 +13,38 @@ Requires Node.js 22.12 or newer.
 
 There is another package called `ssdp` which is the original unmaintained version. Make sure to install `node-ssdp` instead.
 
+## Upgrading from version 4
+
+Version 5 needs Node.js 22.12 or newer.
+
+Check these points in your code and on your network:
+
+- **`server.stop()` finishes later.** It sends `ssdp:byebye`, then closes the sockets. In version 4 the sockets were closed when `stop()` returned, and `ssdp:byebye` did not go out. `stop()` now returns a promise and takes an optional callback. Wait for it before you call `start()` again or end the process.
+
+  ```javascript
+  server.stop().then(function () {
+    process.exit()
+  })
+  ```
+
+- **`start()` can fail.** When a socket cannot be bound, `start()` rejects its promise and calls its callback with the error. In version 4 it never finished. Handle the error.
+
+- **A client uses UDP port 1900.** It listens there for NOTIFY messages and emits `advertise-alive` and `advertise-bye`. In version 4 a client with default options never got these events. A client cannot start when another program holds port 1900 and does not allow address reuse.
+
+- **A server sends `ssdp:alive` and `ssdp:byebye` from a port that the system picks.** In version 4 they came from port 1900. Answers to searches still come from port 1900. Pass `sourcePort: 1900` to send them from port 1900 again.
+
+- **Several network interfaces work without extra options.**
+  - Messages to the SSDP group go out through every interface. In version 4 the system picked one interface for all of them.
+  - A server answers a search once. In version 4 a server with two interfaces sent four answers.
+  - With the `location` option as an object, LOCATION has the address of the interface that is on the subnet of the client.
+  - `explicitSocketBind` is not needed for this anymore.
+
+- **`sockets` holds sending sockets only.** The sockets in `server.sockets` and `client.sockets` send to the SSDP group and receive answers to searches. M-SEARCH and NOTIFY arrive on a separate socket.
+
+- **Linux lets one socket join a multicast group on 20 interfaces by default.** Past that limit an interface sends but does not receive. On a machine with more network interfaces, name the ones to use in the `interfaces` option. The limit is the `net.ipv4.igmp_max_memberships` setting.
+
+- **The `ip` module is not installed with this package anymore.** Add it to your own dependencies if your code uses it.
+
 ## Usage - Client
 
 ```javascript
