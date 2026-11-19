@@ -55,8 +55,11 @@ There is another package called `ssdp` which is the original unmaintained versio
     // start the server
     server.start();
 
-    process.on('exit', function(){
-      server.stop() // advertise shutting down and stop listening
+    // advertise shutting down, then stop listening
+    process.on('SIGINT', function () {
+      server.stop().then(function () {
+        process.exit()
+      })
     })
 ```
 

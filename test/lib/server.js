@@ -155,23 +155,23 @@ describe('Server', function () {
   })
 
   context('on stop', function () {
-    it('does not allow multiple _stops', function (done) {
+    it('does not allow multiple _stops', async function () {
       var server = new Server()
-      server.start()
+      await server.start()
 
       var iface = Object.keys(server.sockets)[0]
       var socket = server.sockets[iface]
 
       assert(socket.bind.calledOnce)
 
-      server.stop()
-      server.stop()
-      server.stop()
+      await Promise.all([server.stop(), server.stop(), server.stop()])
 
       assert(!server.sockets)
       assert.equal(socket.close.callCount, 1)
 
-      done()
+      await server.stop()
+
+      assert.equal(socket.close.callCount, 1)
     })
   })
 
@@ -421,41 +421,36 @@ describe('Server', function () {
       assert.equal(host2, 'ip')
     })
 
-    it.skip('sends out correct byebye info', function () {
-      var adInterval = 500 // to avoid all other advertise timers
-
+    it('sends out correct byebye info, then closes the socket', async function () {
       var server = new Server({
         ssdpIp: 'ip',
-        ssdpTtl: 'never',
-        adInterval: adInterval,
-        ssdpSig: 'signature',
-        unicastHost: 'unicast',
         location: 'location header',
-        ttl: 'ttl',
-        description: 'desc',
-        udn: 'device name'
+        udn: 'device name',
+        suppressRootDeviceAdvertisements: true
       })
+
+      server.addUSN('tv/video')
+
+      await server.start()
 
       var iface = Object.keys(server.sockets)[0]
       var socket = server.sockets[iface]
 
-      // avoid calling server.start
+      var stopped = server.stop()
 
-      server._adLoopInterval = 1
-
-      server.addUSN('tv/video')
-
-      server.stop()
-
-      // server.sock.send should've been called 2 times with 2 unique args
+      // The byebye is not sent yet, so the socket must still be open.
       assert.equal(socket.send.callCount, 1)
+      assert(socket.close.notCalled)
+
+      await stopped
+
+      assert(socket.close.calledOnce)
 
       // argument order is:
       // message, _, message.length, ssdp port, ssdp host
       var args1 = socket.send.getCall(0).args
 
-      var method1 = server._getMethod(args1[0].toString())
-      assert(method1, 'NOTIFY')
+      assert.equal(server._getMethod(args1[0].toString()), 'notify')
 
       var headers1 = server._getHeaders(args1[0].toString())
       assert.equal(headers1.HOST, 'ip:1900')
@@ -471,7 +466,6 @@ describe('Server', function () {
 
       var host1 = args1[4]
       assert.equal(host1, 'ip')
-
     })
   })
 
