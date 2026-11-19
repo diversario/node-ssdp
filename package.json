@@ -10,7 +10,7 @@
     "chromecast",
     "iot"
   ],
-  "version": "4.0.1",
+  "version": "5.0.0",
   "author": "Ilya Shaisultanov <ilya.shaisultanov@gmail.com>",
   "dependencies": {
     "async": "^3.2.6",
