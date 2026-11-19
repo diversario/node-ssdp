@@ -9,6 +9,8 @@
 npm install node-ssdp
 ```
 
+Requires Node.js 22.12 or newer.
+
 There is another package called `ssdp` which is the original unmaintained version. Make sure to install `node-ssdp` instead.
 
 ## Usage - Client

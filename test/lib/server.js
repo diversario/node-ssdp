@@ -2,16 +2,21 @@ require('../helper')
 
 var assert = require('chai').assert
 var expect = require('chai').expect
-var ip = require('ip')
 var os = require('os')
 
 var moduleVersion = require('../../package.json').version
-let Server
+var Server = require('../../lib/server')
 
-if (process.env.SSDP_COV) {
-  Server = require("../../lib-cov/server")
-} else {
-  Server = require("../../lib/server")
+// First external IPv4 address of this machine.
+// The server puts it into LOCATION when the user gives no host.
+function localIp() {
+  var interfaces = os.networkInterfaces()
+
+  for (var name of Object.keys(interfaces)) {
+    for (var info of interfaces[name]) {
+      if (info.family === 'IPv4' && !info.internal) return info.address
+    }
+  }
 }
 
 describe('Server', function () {
@@ -299,7 +304,7 @@ describe('Server', function () {
       assert.equal(headers1.NT, 'tv/video')
       assert.equal(headers1.NTS, 'ssdp:alive')
       assert.equal(headers1.USN, 'device name::tv/video')
-      assert.equal(headers1.LOCATION, 'http://' + ip.address() + ':111/location/path')
+      assert.equal(headers1.LOCATION, 'http://' + localIp() + ':111/location/path')
       assert.equal(headers1['CACHE-CONTROL'], 'max-age=1800')
       assert.equal(headers1.SERVER, 'signature')
 
@@ -319,7 +324,7 @@ describe('Server', function () {
       assert.equal(headers2.NT, 'device name')
       assert.equal(headers2.NTS, 'ssdp:alive')
       assert.equal(headers2.USN, 'device name')
-      assert.equal(headers1.LOCATION, 'http://' + ip.address() + ':111/location/path')
+      assert.equal(headers1.LOCATION, 'http://' + localIp() + ':111/location/path')
       assert.equal(headers2['CACHE-CONTROL'], 'max-age=1800')
       assert.equal(headers2.SERVER, 'signature')
 
@@ -667,7 +672,7 @@ describe('Server', function () {
         'HTTP/1.1 200 OK',
         'ST: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5',
         'USN: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5',
-        'LOCATION: http://' + require('ip').address() + ':10293/upnp/desc.html',
+        'LOCATION: http://' + localIp() + ':10293/upnp/desc.html',
         'CACHE-CONTROL: max-age=1800',
         //'DATE: Fri, 30 May 2014 15:07:26 GMT', we'll test for this separately
         'SERVER: node.js/' + process.versions.node + ' UPnP/1.1 node-ssdp/' + moduleVersion,
@@ -862,7 +867,7 @@ describe('Server', function () {
         'HTTP/1.1 200 OK',
         'ST: urn:Manufacturer:device:*',
         'USN: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5::urn:Manufacturer:device:*',
-        'LOCATION: http://' + require('ip').address() + ':10293/upnp/desc.html',
+        'LOCATION: http://' + localIp() + ':10293/upnp/desc.html',
         'CACHE-CONTROL: max-age=1800',
         //'DATE: Fri, 30 May 2014 15:07:26 GMT', we'll test for this separately
         'SERVER: node.js/' + process.versions.node + ' UPnP/1.1 node-ssdp/' + moduleVersion,
@@ -935,7 +940,7 @@ describe('Server', function () {
         'HTTP/1.1 200 OK',
         'ST: urn:Manufacturer:device:*',
         'USN: uuid:f40c2981-7329-40b7-8b04-27f187aecfb5::urn:Manufacturer:device:*',
-        'LOCATION: http://' + require('ip').address() + ':10293/upnp/desc.html',
+        'LOCATION: http://' + localIp() + ':10293/upnp/desc.html',
         'CACHE-CONTROL: max-age=1800',
         //'DATE: Fri, 30 May 2014 15:07:26 GMT', we'll test for this separately
         'SERVER: node.js/' + process.versions.node + ' UPnP/1.1 node-ssdp/' + moduleVersion,

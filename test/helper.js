@@ -3,7 +3,7 @@ var sinon = require('sinon')
   , dgram = require('dgram')
 
 beforeEach(function() {
-  this.sinon = sinon.sandbox.create();
+  this.sinon = sinon.createSandbox();
   this.sinon.stub(dgram, 'createSocket').callsFake(getFakeSocket.bind(this))
 });
 

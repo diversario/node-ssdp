@@ -4,13 +4,7 @@ var moduleVersion = require('../../package.json').version
 var expect = require('chai').expect
 var assert = require('assert')
 
-let Client
-
-if (process.env.SSDP_COV) {
-  Client = require("../../lib-cov/client")
-} else {
-  Client = require("../../lib/client")
-}
+var Client = require('../../lib/client')
 
 describe('Client', function () {
   context('start', function() {
@@ -88,7 +82,7 @@ describe('Client', function () {
 
       var iface = Object.keys(client.sockets)[0]
 
-      client.sockets[iface].emit('message', Buffer(response.join('\r\n')))
+      client.sockets[iface].emit('message', Buffer.from(response.join('\r\n')))
     })
   })
 })
