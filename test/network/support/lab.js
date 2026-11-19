@@ -147,6 +147,14 @@ class Host {
   }
 
   /**
+   * Changes a kernel setting of this host,
+   * for example `net.ipv4.igmp_max_memberships`.
+   */
+  sysctl (name, value) {
+    ip('netns', 'exec', this.name, 'sysctl', '-q', '-w', name + '=' + value)
+  }
+
+  /**
    * Creates an SSDP server on this host. It is not started.
    *
    * @param {Object} [opts] Options for the `Server` constructor

@@ -23,6 +23,10 @@ There is another package called `ssdp` which is the original unmaintained versio
       console.log('Got a response to an m-search.');
     });
 
+    // devices also say when they join and leave the network
+    client.on('advertise-alive', function (headers, rinfo) {});
+    client.on('advertise-bye', function (headers, rinfo) {});
+
     // search for a service type
     client.search('urn:schemas-upnp-org:service:ContentDirectory:1');
 
@@ -75,7 +79,7 @@ const client = new Client({...})
 ```
 
 - `interfaces` _String[]_ List of interfaces to explicitly bind. By default, bind to all available interfaces.
-- `explicitSocketBind` _Boolean_ Bind sockets to each discovered interface explicitly instead of relying on the system. Might help with issues with multiple NICs.
+- `explicitSocketBind` _Boolean_ Bind the sending socket of each interface to the address of that interface. By default it is bound to all addresses.
 - `customLogger` _Function_ A logger function to use instead of the default. The first argument to the function can contain a format string.
 - `reuseAddr` _Boolean_ When true `socket.bind()` will reuse the address, even if another process has already bound a socket on it. Default: `true`
 
@@ -94,7 +98,7 @@ const server = new Server({...})
 - `udn` _String_ Unique Device Name. Default: `uuid:f40c2981-7329-40b7-8b04-27f187aecfb5`.
 - `allowWildcards` _Boolean_ Accept wildcards (`*`) in `serviceTypes` of `M-SEARCH` packets, e.g. `usn:Belkin:device:**`. Default: `false`
 - `interfaces` _String[]_ List of interfaces to explicitly bind. By default, bind to all available interfaces.
-- `explicitSocketBind` _Boolean_ Bind sockets to each discovered interface explicitly instead of relying on the system. Might help with issues with multiple NICs.
+- `explicitSocketBind` _Boolean_ Bind the sending socket of each interface to the address of that interface. By default it is bound to all addresses.
 - `customLogger` _Function_ A logger function to use instead of the default. The first argument to the function can contain a format string.
 - `suppressRootDeviceAdvertisements` _Boolean_ When true the SSDP server will not advertise the root device (i.e. the bare UDN). In some scenarios this advertisement is not needed. Default: `false`
 - `reuseAddr` _Boolean_ When true `socket.bind()` will reuse the address, even if another process has already bound a socket on it. Default: `true`
@@ -125,7 +129,6 @@ make test-network   # network tests, needs podman or docker
 
 The network tests send real SSDP packets over multicast. They run in a container and build a small virtual network in it: several machines on one lan, and a machine with two network interfaces between two lans. They show how the library behaves on Linux only.
 
-- `KNOWN_BUGS=1 make test-network` also runs the tests for bugs that are not fixed yet. Those tests fail.
 - `DEBUG='node-ssdp:*' make test-network` prints the library logs of every machine.
 - `sh test/network/run.sh --grep byebye` passes arguments to mocha.
 

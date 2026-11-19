@@ -13,7 +13,6 @@
 #
 #   CONTAINER_ENGINE  `podman` or `docker`. Default: the first one found.
 #   DEBUG             Passed to the tests. `node-ssdp:*` prints library logs.
-#   KNOWN_BUGS        Set to 1 to also run the tests for known bugs. They fail.
 set -eu
 
 cd "$(dirname "$0")/../.."
@@ -35,7 +34,7 @@ image=node-ssdp-network-test
 
 "$engine" build --quiet --tag "$image" --file test/network/Containerfile . >/dev/null
 
-exec "$engine" run --rm --privileged --network none --env DEBUG --env KNOWN_BUGS \
+exec "$engine" run --rm --privileged --network none --env DEBUG \
   --volume "$PWD/index.js":/work/index.js:ro \
   --volume "$PWD/lib":/work/lib:ro \
   --volume "$PWD/test":/work/test:ro \

@@ -3,11 +3,6 @@
 const assert = require('node:assert/strict')
 const { Lab } = require('./support/lab')
 
-// A test for something the library does not do yet. The title names the
-// GitHub issue when there is one. It runs only when KNOWN_BUGS is set, and
-// it fails.
-const knownBug = process.env.KNOWN_BUGS ? it : it.skip
-
 const GROUP = '239.255.255.250'
 const UDN = 'uuid:11111111-1111-1111-1111-111111111111'
 const OTHER_UDN = 'uuid:22222222-2222-2222-2222-222222222222'
@@ -104,18 +99,7 @@ describe('SSDP on a machine with two network interfaces', function () {
       assert(both.groups(lan2).includes(GROUP))
     })
 
-    it('answers searches from both lans', async function () {
-      const server = await both.server({ udn: UDN, location: LOCATION }, [ROOT])
-      await server.start()
-
-      const client1 = await one.client()
-      const client2 = await two.client()
-
-      assert.notEqual((await client1.search(ROOT)).length, 0)
-      assert.notEqual((await client2.search(ROOT)).length, 0)
-    })
-
-    knownBug('answers a search with one response (#109)', async function () {
+    it('answers a search from each lan with one response', async function () {
       const server = await both.server({ udn: UDN, location: LOCATION }, [ROOT])
       await server.start()
 
@@ -126,7 +110,7 @@ describe('SSDP on a machine with two network interfaces', function () {
       assert.equal((await client2.search(ROOT)).length, 1)
     })
 
-    knownBug('answers with its address on the lan of the client in LOCATION (#102)', async function () {
+    it('answers with its address on the lan of the client in LOCATION', async function () {
       const server = await both.server({ udn: UDN, location: LOCATION }, [ROOT])
       await server.start()
 
@@ -144,6 +128,44 @@ describe('SSDP on a machine with two network interfaces', function () {
 
     it('sends ssdp:alive to each lan, with its address on that lan in LOCATION', function () {
       return checkAliveOnBothLans({})
+    })
+
+    it('emits advertise-alive once for one NOTIFY', async function () {
+      const server = await both.server({ udn: UDN })
+      await server.start()
+
+      const probe = await one.probe()
+      const usn = OTHER_UDN + '::' + ROOT
+
+      const [alives] = await Promise.all([
+        server.during('advertise-alive', 300),
+        probe.send([
+          'NOTIFY * HTTP/1.1',
+          'HOST: ' + GROUP + ':1900',
+          'NT: ' + ROOT,
+          'NTS: ssdp:alive',
+          'USN: ' + usn
+        ])
+      ])
+
+      assert.equal(alives.filter((alive) => alive.headers.USN === usn).length, 1)
+    })
+
+    it('starts when the system does not let it join the SSDP group on every interface', async function () {
+      // One socket can now have one membership. The second interface is one
+      // too many.
+      both.sysctl('net.ipv4.igmp_max_memberships', 1)
+
+      try {
+        const server = await both.server({ udn: UDN, location: LOCATION }, [ROOT])
+        await server.start()
+
+        const client = await one.client()
+
+        assert.equal((await client.search(ROOT)).length, 1)
+      } finally {
+        both.sysctl('net.ipv4.igmp_max_memberships', 20)
+      }
     })
   })
 
@@ -177,17 +199,15 @@ describe('SSDP on a machine with two network interfaces', function () {
       return checkAliveOnBothLans({ explicitSocketBind: true })
     })
 
-    // The server gets no search at all. On Linux, a socket that is bound to
-    // the address of an interface does not get multicast packets.
-    knownBug('answers searches from both lans', async function () {
+    it('answers a search from each lan with one response', async function () {
       const server = await both.server({ udn: UDN, location: LOCATION, explicitSocketBind: true }, [ROOT])
       await server.start()
 
       const client1 = await one.client()
       const client2 = await two.client()
 
-      assert.notEqual((await client1.search(ROOT)).length, 0)
-      assert.notEqual((await client2.search(ROOT)).length, 0)
+      assert.equal((await client1.search(ROOT)).length, 1)
+      assert.equal((await client2.search(ROOT)).length, 1)
     })
   })
 
@@ -213,6 +233,19 @@ describe('SSDP on a machine with two network interfaces', function () {
         two.address(lan2) + ' ' + OTHER_UDN + '::' + ROOT
       ])
     })
+
+    it('emits advertise-alive for servers on both lans', async function () {
+      const client = await both.client()
+      await client.start()
+
+      const server1 = await one.server({ udn: UDN, adInterval: 200 }, [ROOT])
+      const server2 = await two.server({ udn: OTHER_UDN, adInterval: 200 }, [ROOT])
+      await server1.start()
+      await server2.start()
+
+      await client.waitFor('advertise-alive', (event) => event.rinfo.address === one.address(lan1))
+      await client.waitFor('advertise-alive', (event) => event.rinfo.address === two.address(lan2))
+    })
   })
 
   context('client with explicitSocketBind', function () {
@@ -228,21 +261,6 @@ describe('SSDP on a machine with two network interfaces', function () {
         one.address(lan1) + ' ' + UDN + '::' + ROOT,
         two.address(lan2) + ' ' + OTHER_UDN + '::' + ROOT
       ])
-    })
-  })
-
-  context('client that listens on port 1900', function () {
-    it('emits advertise-alive for servers on both lans', async function () {
-      const client = await both.client({ sourcePort: 1900 })
-      await client.start()
-
-      const server1 = await one.server({ udn: UDN, adInterval: 200 }, [ROOT])
-      const server2 = await two.server({ udn: OTHER_UDN, adInterval: 200 }, [ROOT])
-      await server1.start()
-      await server2.start()
-
-      await client.waitFor('advertise-alive', (event) => event.rinfo.address === one.address(lan1))
-      await client.waitFor('advertise-alive', (event) => event.rinfo.address === two.address(lan2))
     })
   })
 })
