@@ -94,18 +94,33 @@ describe('Server', function () {
       });
     })
 
-    it('joins the multicast group on every interface', function () {
+    it('joins the multicast group once on every interface', function () {
+      function ipv4(address) {
+        return {address: address, netmask: '255.255.255.0', family: 'IPv4', internal: false}
+      }
+
+      // en0 has three addresses. Linux lists an address that has a label
+      // under its own name.
+      this.sinon.stub(os, 'networkInterfaces').returns({
+        'en0': [ipv4('192.168.1.1'), ipv4('192.168.1.2')],
+        'en0:1': [ipv4('192.168.2.1')],
+        'en1': [ipv4('10.0.0.1')]
+      })
+
       var server = new Server({ssdpIp: 'fake ip', ssdpTtl: 'never!'})
       server.start()
 
+      assert.deepEqual(server._listener.addMembership.args, [
+        ['fake ip', '192.168.1.1'],
+        ['fake ip', '10.0.0.1']
+      ])
+
       var ifaces = Object.keys(server.sockets)
 
-      assert.equal(server._listener.addMembership.callCount, ifaces.length)
+      assert.deepEqual(ifaces, ['192.168.1.1', '192.168.1.2', '192.168.2.1', '10.0.0.1'])
 
       ifaces.forEach(function (iface) {
         var socket = server.sockets[iface]
-
-        assert(server._listener.addMembership.calledWith('fake ip', iface))
 
         assert.equal(socket.setMulticastTTL.callCount, 1)
         assert(socket.setMulticastTTL.calledWith('never!'))

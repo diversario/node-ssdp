@@ -16,9 +16,10 @@ function isNotify (nts) {
   }
 }
 
-// Three machines on one lan. Each has one network interface.
+// Four machines on one lan. Each has one network interface.
+// The interface of `aliased` has three addresses.
 describe('SSDP between machines on one lan', function () {
-  let lab, lan, device, control, third
+  let lab, lan, device, control, third, aliased
 
   before(function () {
     lab = new Lab()
@@ -26,6 +27,10 @@ describe('SSDP between machines on one lan', function () {
     device = lab.addHost([lan])
     control = lab.addHost([lan])
     third = lab.addHost([lan])
+
+    aliased = lab.addHost([lan])
+    aliased.addAddress(lan, lan.prefix + '.101/24')
+    aliased.addAddress(lan, '192.168.77.1/24', aliased.ifname(lan) + ':1')
   })
 
   afterEach(function () {
@@ -293,6 +298,20 @@ describe('SSDP between machines on one lan', function () {
       const second = await device.server({ udn: OTHER_UDN, reuseAddr: false })
 
       await assert.rejects(second.start(), /EADDRINUSE/)
+    })
+  })
+
+  context('when an interface has several addresses', function () {
+    it('a server starts and answers a search once', async function () {
+      const server = await aliased.server({ udn: UDN, location: { port: 8080, path: '/desc.xml' } }, [ROOT])
+      await server.start()
+
+      const client = await control.client()
+      const responses = await client.search(ROOT)
+
+      assert.equal(responses.length, 1)
+      assert.equal(responses[0].rinfo.address, aliased.address(lan))
+      assert.equal(responses[0].headers.LOCATION, 'http://' + aliased.address(lan) + ':8080/desc.xml')
     })
   })
 
