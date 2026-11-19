@@ -202,7 +202,7 @@ describe('SSDP between machines on one lan', function () {
       }
     })
 
-    knownBug('sends ssdp:byebye for every USN to the SSDP group when it stops (#97)', async function () {
+    it('sends ssdp:byebye for every USN to the SSDP group when it stops', async function () {
       const probe = await control.probe()
 
       const server = await device.server({ udn: UDN, adInterval: 200 }, [ROOT])

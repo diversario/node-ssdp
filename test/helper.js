@@ -35,8 +35,13 @@ function getFakeSocket() {
 
   this.sinon.spy(s, 'bind')
 
+  // Like a real socket, it reports that the message is sent a moment later.
   s.send = this.sinon.stub().callsFake(function () {
+    var cb = [].slice.call(arguments).pop()
+
     s.emit('_send_called')
+
+    if (typeof cb == 'function') process.nextTick(cb)
   })
 
   s.close = this.sinon.stub()
