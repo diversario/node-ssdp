@@ -172,12 +172,15 @@ class Host {
   /**
    * Creates an SSDP server on this host. It is not started.
    *
+   * The server answers a search at once, so that the tests are short.
+   * Pass `mxDelay: true` for the delay that the library has by default.
+   *
    * @param {Object} [opts] Options for the `Server` constructor
    * @param {String[]} [usns] Passed to `addUSN` one by one
    * @returns {Promise<Peer>}
    */
   server (opts, usns) {
-    return this._peer('server', opts || {}, usns || [])
+    return this._peer('server', Object.assign({ mxDelay: false }, opts), usns || [])
   }
 
   /**
@@ -192,7 +195,8 @@ class Host {
 
   /**
    * Creates one process on this host that runs an SSDP server in each of
-   * several cluster workers. `start` starts all of them.
+   * several cluster workers. `start` starts all of them. Like `server`,
+   * they answer a search at once.
    *
    * @param {Object} [opts] Options for the `Server` constructor
    * @param {String[]} [usns] Passed to `addUSN` of every server
@@ -200,7 +204,7 @@ class Host {
    * @returns {Promise<Peer>}
    */
   cluster (opts, usns, udns) {
-    return this._peer('cluster', opts || {}, usns || [], udns)
+    return this._peer('cluster', Object.assign({ mxDelay: false }, opts), usns || [], udns)
   }
 
   /**

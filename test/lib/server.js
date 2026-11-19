@@ -734,8 +734,65 @@ describe('Server', function () {
   })
 
   context('when receiving an M-SEARCH message', function () {
+    context('with the MX delay', function () {
+      var clock, server, socket
+
+      function search(mx) {
+        return [
+          'M-SEARCH * HTTP/1.1',
+          'HOST: 239.255.255.250:1900',
+          'ST: ssdp:all',
+          'MAN: "ssdp:discover"',
+          'MX: ' + mx
+        ].join('\r\n')
+      }
+
+      beforeEach(function () {
+        clock = this.sinon.useFakeTimers()
+
+        this.sinon.stub(Math, 'random').returns(0.5)
+
+        server = new Server
+
+        server.advertise = this.sinon.stub() // otherwise it'll call `send`
+
+        server.start()
+
+        socket = server._listener
+      })
+
+      it('waits a random part of MX seconds before it replies', function () {
+        socket.emit('message', search(3), {address: 1, port: 2})
+
+        clock.tick(1499)
+        assert(socket.send.notCalled)
+
+        clock.tick(1)
+        assert(socket.send.calledOnce)
+      })
+
+      it('treats an MX above 5 as 5', function () {
+        socket.emit('message', search(120), {address: 1, port: 2})
+
+        clock.tick(2499)
+        assert(socket.send.notCalled)
+
+        clock.tick(1)
+        assert(socket.send.calledOnce)
+      })
+
+      it('does not reply when it was stopped in the meantime', function () {
+        socket.emit('message', search(3), {address: 1, port: 2})
+
+        server._stop()
+
+        clock.tick(5000)
+        assert(socket.send.notCalled)
+      })
+    })
+
     it('with unknown service type it\'s ignored', function (done) {
-      var server = new Server
+      var server = new Server({mxDelay: false})
 
       server.advertise = this.sinon.stub() // otherwise it'll call `send`
 
@@ -762,7 +819,7 @@ describe('Server', function () {
     })
 
     it('with ssdp:all service type it replies with a unicast 200 OK', function (done) {
-      var server = new Server
+      var server = new Server({mxDelay: false})
 
       server.advertise = this.sinon.stub() // otherwise it'll call `send`
 
@@ -856,6 +913,7 @@ describe('Server', function () {
       })
 
       var server = new Server({
+        mxDelay: false,
         location: {
           port: 123,
           path: '/hello/there'
@@ -902,7 +960,7 @@ describe('Server', function () {
     })
 
     it('with matching wildcard it replies with a unicast 200 OK', function (done) {
-      var server = new Server({allowWildcards: true})
+      var server = new Server({allowWildcards: true, mxDelay: false})
       server.addUSN('urn:Manufacturer:device:controllee:1')
 
       server.advertise = this.sinon.stub() // otherwise it'll call `send`
@@ -966,6 +1024,7 @@ describe('Server', function () {
 
     it('it includes extra headers in replies with a unicast 200 OK', function (done) {
       var server = new Server({
+        mxDelay: false,
         allowWildcards: true,
         headers: {
             FOO: 'bar',

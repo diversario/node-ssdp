@@ -180,6 +180,24 @@ describe('SSDP between machines on one lan', function () {
       assert.equal(response.headers.ST, ROOT)
       assert.equal(response.headers.USN, UDN + '::' + ROOT)
     })
+
+    it('gets a response within the MX time from a server that waits before it answers', async function () {
+      const server = await device.server({ udn: UDN, mxDelay: true }, [ROOT])
+      await server.start()
+
+      const probe = await control.probe()
+
+      await probe.send([
+        'M-SEARCH * HTTP/1.1',
+        'HOST: ' + GROUP + ':1900',
+        'MAN: "ssdp:discover"',
+        'MX: 1',
+        'ST: ' + ROOT
+      ])
+
+      // MX is 1 second. The rest is room for a slow machine.
+      await probe.waitFor('packet', (packet) => packet.startLine === 'HTTP/1.1 200 OK', 1500)
+    })
   })
 
   context('when a server advertises', function () {
