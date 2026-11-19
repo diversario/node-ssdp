@@ -130,6 +130,9 @@ describe('Server', function () {
       assert.equal(socket.setMulticastTTL.callCount, 1)
       assert(socket.setMulticastTTL.calledWith('never!'))
 
+      assert.equal(socket.setMulticastInterface.callCount, 1)
+      assert(socket.setMulticastInterface.calledWith(iface))
+
       done()
     })
 
