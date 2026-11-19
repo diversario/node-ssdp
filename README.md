@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/diversario/node-ssdp.svg?branch=master)](https://travis-ci.org/diversario/node-ssdp)
+[![Build Status](https://github.com/diversario/node-ssdp/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/diversario/node-ssdp/actions/workflows/test.yml)
 [![Coverage Status](https://img.shields.io/coveralls/diversario/node-ssdp.svg)](https://coveralls.io/r/diversario/node-ssdp?branch=master)
 [![Dependency Status](https://gemnasium.com/diversario/node-ssdp.png)](https://gemnasium.com/diversario/node-ssdp)
 [![NPM version](https://badge.fury.io/js/node-ssdp.svg)](http://badge.fury.io/js/node-ssdp)
