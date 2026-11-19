@@ -35,7 +35,7 @@ Check these points in your code and on your network:
 
 - **Several network interfaces work without extra options.**
   - Messages to the SSDP group go out through every interface. In version 4 the system picked one interface for all of them.
-  - A server answers a search once. In version 4 a server with two interfaces sent four answers.
+  - A server no longer sends duplicate answers for the same USN. A search gets one answer for each USN that matches. In version 4 a server with two interfaces sent four answers for one USN.
   - With the `location` option as an object, LOCATION has the address of the interface that is on the subnet of the client.
   - `explicitSocketBind` is not needed for this anymore.
 
