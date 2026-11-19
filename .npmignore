@@ -2,6 +2,7 @@
 .project
 .dockerignore
 .github/
+eslint.config.js
 /node_modules
 .coveralls.yml
 test/

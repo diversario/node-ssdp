@@ -26,7 +26,7 @@ function ip (...args) {
   try {
     return execFileSync('ip', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
   } catch (error) {
-    throw new Error('`ip ' + args.join(' ') + '` failed: ' + (error.stderr || error.message).trim())
+    throw new Error('`ip ' + args.join(' ') + '` failed: ' + (error.stderr || error.message).trim(), { cause: error })
   }
 }
 

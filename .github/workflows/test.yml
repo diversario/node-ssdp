@@ -36,3 +36,16 @@ jobs:
       - run: make test-network
         env:
           CONTAINER_ENGINE: docker
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # ESLint needs a newer Node than the oldest one the package supports.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint

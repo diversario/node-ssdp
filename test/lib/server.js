@@ -80,7 +80,7 @@ describe('Server', function () {
 
     it('takes optional callback', function (done) {
       var server = new Server();
-      server.start(function (argument) {
+      server.start(function () {
         assert(true);
         done();
       });
@@ -88,7 +88,7 @@ describe('Server', function () {
 
     it('returs a promise', function (done) {
       var server = new Server();
-      server.start().then(function (argument) {
+      server.start().then(function () {
         assert(true);
         done();
       });
