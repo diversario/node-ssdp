@@ -269,6 +269,97 @@ describe('Server', function () {
         assert(started.calledOnce)
         assert.equal(started.getCall(0).args[0], undefined)
       })
+
+      it('can be stopped while it waits for the second try', async function () {
+        this.sinon.stub(os, 'networkInterfaces').returns({
+          'en0': [ipv4('192.168.1.1')]
+        })
+
+        var server = new Server()
+        // cheating but otherwise cannot make the listener fail
+        server._createSockets()
+
+        var listener = server._listener
+
+        listener.addMembership.throws(notReady())
+
+        var started = this.sinon.stub()
+
+        server.start(started).catch(function () {})
+
+        await server.stop()
+
+        assert(started.calledOnce)
+        assert.match(started.getCall(0).args[0].message, /Stopped/)
+        assert(listener.close.calledOnce)
+        assert(!server.sockets)
+
+        // the second try does not happen anymore
+        clock.tick(5000)
+
+        assert.equal(listener.addMembership.callCount, 1)
+        assert(started.calledOnce)
+      })
+
+      it('can be started again after it was stopped during the wait', async function () {
+        this.sinon.stub(os, 'networkInterfaces').returns({
+          'en0': [ipv4('192.168.1.1')]
+        })
+
+        var server = new Server()
+        // cheating but otherwise cannot make the listener fail
+        server._createSockets()
+
+        server._listener.addMembership.throws(notReady())
+
+        var first = this.sinon.stub()
+
+        server.start(first).catch(function () {})
+
+        await server.stop()
+
+        // The second start gets new sockets. The interface is present now.
+        var second = this.sinon.stub()
+
+        server.start(second)
+
+        assert(second.calledOnce)
+        assert.equal(second.getCall(0).args[0], undefined)
+
+        var sockets = server.sockets
+          , listener = server._listener
+
+        // The time for the second try of the first start passes.
+        clock.tick(5000)
+
+        assert(first.calledOnce)
+        assert(second.calledOnce)
+        assert.equal(server.sockets, sockets)
+        assert(listener.close.notCalled)
+      })
+    })
+
+    it('can be stopped before the sockets are bound', async function () {
+      var server = new Server()
+      // cheating but otherwise cannot keep the listener from binding
+      server._createSockets()
+
+      var listener = server._listener
+
+      listener.bind = this.sinon.stub()
+
+      var started = this.sinon.stub()
+
+      server.start(started).catch(function () {})
+
+      assert(started.notCalled)
+
+      await server.stop()
+
+      assert(started.calledOnce)
+      assert.match(started.getCall(0).args[0].message, /Stopped/)
+      assert(listener.close.calledOnce)
+      assert(!server.sockets)
     })
 
     it('starts advertising every n milliseconds', function () {
