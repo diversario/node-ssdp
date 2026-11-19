@@ -23,6 +23,15 @@ function ipv4(address) {
   return {address: address, netmask: '255.255.255.0', family: 'IPv4', internal: false}
 }
 
+// The error that the system gives while an interface is not present yet.
+function notReady() {
+  var error = new Error('addMembership ENODEV')
+
+  error.code = 'ENODEV'
+
+  return error
+}
+
 describe('Server', function () {
   context('on construction', function () {
     it('preserves user-set sourcePort', function () {
@@ -177,6 +186,89 @@ describe('Server', function () {
       assert.equal(failure, error)
       assert(listener.close.calledOnce)
       assert(!server.sockets)
+    })
+
+    context('when an interface is not present yet', function () {
+      var clock
+
+      beforeEach(function () {
+        clock = this.sinon.useFakeTimers()
+        this.sinon.stub(process, 'emitWarning')
+      })
+
+      it('finishes after the second try when no other interface has joined', function () {
+        this.sinon.stub(os, 'networkInterfaces').returns({
+          'en0': [ipv4('192.168.1.1')]
+        })
+
+        var server = new Server()
+        // cheating but otherwise cannot make the listener fail
+        server._createSockets()
+
+        server._listener.addMembership.onFirstCall().throws(notReady())
+
+        var started = this.sinon.stub()
+
+        server.start(started)
+
+        assert(started.notCalled)
+
+        clock.tick(5000)
+
+        assert(started.calledOnce)
+        assert.equal(started.getCall(0).args[0], undefined)
+        assert.equal(server._listener.addMembership.callCount, 2)
+      })
+
+      it('fails after the second try when that fails too', function () {
+        this.sinon.stub(os, 'networkInterfaces').returns({
+          'en0': [ipv4('192.168.1.1')]
+        })
+
+        var server = new Server()
+        // cheating but otherwise cannot make the listener fail
+        server._createSockets()
+
+        var error = notReady()
+        var listener = server._listener
+
+        listener.addMembership.throws(error)
+
+        var started = this.sinon.stub()
+
+        server.start(started).catch(function () {})
+
+        assert(started.notCalled)
+
+        clock.tick(5000)
+
+        assert(started.calledOnce)
+        assert.equal(started.getCall(0).args[0], error)
+        assert(listener.close.calledOnce)
+        assert(!server.sockets)
+      })
+
+      it('does not wait for the second try when another interface has joined', function () {
+        this.sinon.stub(os, 'networkInterfaces').returns({
+          'en0': [ipv4('192.168.1.1')],
+          'en1': [ipv4('10.0.0.1')]
+        })
+
+        var server = new Server()
+        // cheating but otherwise cannot make the listener fail
+        server._createSockets()
+
+        server._listener.addMembership
+          .withArgs('239.255.255.250', '192.168.1.1')
+          .throws(notReady())
+
+        var started = this.sinon.stub()
+
+        server.start(started)
+
+        assert(started.calledOnce)
+        assert.equal(started.getCall(0).args[0], undefined)
+      })
     })
 
     it('starts advertising every n milliseconds', function () {
