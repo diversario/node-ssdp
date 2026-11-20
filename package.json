@@ -46,6 +46,7 @@
   "scripts": {
     "test": "mocha --exit --recursive test/lib",
     "test:network": "mocha --exit --timeout 15000 test/network",
+    "test:local": "mocha --exit --timeout 15000 test/network/local",
     "coverage": "c8 --reporter=text --reporter=lcov mocha --exit --recursive test/lib",
     "lint": "eslint ."
   },
