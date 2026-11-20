@@ -1210,5 +1210,71 @@ describe('Server', function () {
 
       assert(server._listener.send.notCalled)
     })
+
+    context('with wildcards allowed', function () {
+      var server, listener
+
+      // Sends one search. Returns the headers of every answer.
+      function answersTo(st) {
+        listener.send.resetHistory()
+        listener.emit('message', searchFor(st), {address: localIp(), port: 2})
+
+        return listener.send.args.map(function (args) {
+          return server._getHeaders(args[0].toString())
+        })
+      }
+
+      beforeEach(function () {
+        server = new Server({
+          allowWildcards: true,
+          mxDelay: false,
+          udn: 'uuid:1234',
+          suppressRootDeviceAdvertisements: true
+        })
+
+        server.addUSN('urn:Manufacturer:device:controllee:1')
+
+        server.advertise = this.sinon.stub() // otherwise it'll call `send`
+
+        server.start()
+
+        listener = server._listener
+      })
+
+      it('accepts a wildcard at any place of the search type', function () {
+        var types = ['urn:*:device:controllee:1', '*:controllee:1', 'urn:Manufacturer:*:controllee:*', 'device:**']
+
+        types.forEach(function (st) {
+          var answers = answersTo(st)
+
+          assert.equal(answers.length, 1, st)
+          assert.equal(answers[0].ST, st)
+        })
+
+        assert.equal(answersTo('urn:*:device:controllee:1')[0].USN, 'uuid:1234::urn:*:device:controllee:1')
+        assert.equal(answersTo('device:**')[0].USN, 'uuid:1234::urn:Manufacturer:device:**')
+      })
+
+      it('reads every other character as itself', function () {
+        // As regular expressions, the first two are not valid, and the
+        // others fit the USN.
+        var types = ['(', '[', 'urn:Manufacturer:device:controllee:.', '.+', '\\w*', 'urn:Manufacturer:device:controllee:1|x']
+
+        types.forEach(function (st) {
+          assert.deepEqual(answersTo(st), [], st)
+        })
+      })
+
+      it('answers a search type of many wildcards in a short time', function () {
+        // As a regular expression, this search type needs seconds.
+        var start = process.hrtime.bigint()
+
+        assert.deepEqual(answersTo('*******!'), [])
+
+        var milliseconds = Number(process.hrtime.bigint() - start) / 1e6
+
+        assert(milliseconds < 200, 'took ' + milliseconds + ' ms')
+      })
+    })
   })
 })

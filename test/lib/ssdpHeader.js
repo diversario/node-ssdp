@@ -191,5 +191,14 @@ describe('SSDP Header class', function () {
       var expectedRequestBuffer = Buffer.from('METHOD * HTTP/1.1\r\nfoo: 1\r\nBAR: three\r\nBoo: yes\r\n\r\n')
       expect(hRequest.toBuffer({Boo: 'yes', BAR: 'three'})).to.deep.equal(expectedRequestBuffer)
     })
+
+    it('writes `?` for a character that has no byte of its own', function () {
+      // The low byte of `č` (U+010D) is a carriage return. The low byte of
+      // `Ċ` (U+010A) is a line feed. `é` (U+00E9) has a byte of its own.
+      var hRequest = new Header('method', {foo: 'a\u010d\u010ab', BAR: 'caf\u00e9'})
+
+      var expectedRequestBuffer = Buffer.from('METHOD * HTTP/1.1\r\nfoo: a??b\r\nBAR: caf\u00e9\r\n\r\n', 'latin1')
+      expect(hRequest.toBuffer()).to.deep.equal(expectedRequestBuffer)
+    })
   })
 })

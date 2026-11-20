@@ -133,7 +133,7 @@ const server = new Server({...})
   - `location.port` _Number_ Location port. No default.
   - `location.path` _String_ Location path. No default.
 - `udn` _String_ Unique Device Name. Default: `uuid:f40c2981-7329-40b7-8b04-27f187aecfb5`.
-- `allowWildcards` _Boolean_ Accept wildcards (`*`) in `serviceTypes` of `M-SEARCH` packets, e.g. `usn:Belkin:device:**`. Default: `false`
+- `allowWildcards` _Boolean_ Accept wildcards (`*`) in `serviceTypes` of `M-SEARCH` packets, e.g. `usn:Belkin:device:**`. A `*` stands for any characters. Every other character stands for itself. Default: `false`
 - `mxDelay` _Boolean_ Wait a random time before answering an `M-SEARCH`, as UPnP recommends. The time is between 0 and the `MX` value of the search, in seconds, and 5 seconds at most. Default: `true`
 - `interfaces` _String[]_ List of interfaces to explicitly bind. By default, bind to all available interfaces.
 - `explicitSocketBind` _Boolean_ Bind the sending socket of each interface to the address of that interface. By default it is bound to all addresses.
