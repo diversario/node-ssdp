@@ -13,10 +13,8 @@
   "version": "5.0.0",
   "author": "Ilya Shaisultanov <github@diversario.com>",
   "dependencies": {
-    "async": "^3.2.6",
     "bluebird": "^3.7.2",
-    "debug": "^4.4.3",
-    "extend": "^3.0.2"
+    "debug": "^4.4.3"
   },
   "repository": {
     "type": "git",
