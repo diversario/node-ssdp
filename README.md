@@ -43,9 +43,11 @@ Check these points in your code and on your network:
 
 - **`sockets` holds sending sockets only.** The sockets in `server.sockets` and `client.sockets` send to the SSDP group and receive answers to searches. M-SEARCH and NOTIFY arrive on a separate socket.
 
-- **An interface that cannot join the multicast group is skipped.** The library prints a warning that names the interface. That interface sends but does not receive. `start()` fails only when no interface can join. In version 4 the process stopped with an uncaught error.
+- **An interface that cannot join the multicast group is skipped.** The library prints a warning that names the interface. The code of the warning is `NODE_SSDP_INTERFACE_SKIPPED`. That interface sends but does not receive. `start()` fails only when no interface can join. In version 4 the process stopped with an uncaught error.
 
 - **Linux lets one socket join a multicast group on 20 interfaces by default.** Interfaces past that limit are skipped as described above. On a machine with more network interfaces, name the ones to use in the `interfaces` option. The limit is the `net.ipv4.igmp_max_memberships` setting.
+
+- **A warning tells when messages cannot leave through an interface.** When a search or an advertisement cannot be sent to the SSDP group through an interface, the library prints a warning that names the interface. The code of the warning is `NODE_SSDP_SEND_FAILED`. Devices on that network do not get the messages. In version 4 the error was only in the debug log. On macOS this happens when the program is not allowed to use the local network: see System Settings, Privacy & Security, Local Network.
 
 - **The `ip` module is not installed with this package anymore.** Add it to your own dependencies if your code uses it.
 
