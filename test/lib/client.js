@@ -3,6 +3,7 @@ var moduleVersion = require('../../package.json').version
 
 var expect = require('chai').expect
 var assert = require('assert')
+var os = require('os')
 
 var Client = require('../../lib/client')
 
@@ -83,6 +84,80 @@ describe('Client', function () {
       var iface = Object.keys(client.sockets)[0]
 
       client.sockets[iface].emit('message', Buffer.from(response.join('\r\n')))
+    })
+  })
+
+  context('when a search cannot leave through an interface', function () {
+    var client, socket
+
+    // One entry of `os.networkInterfaces()`.
+    function ipv4(address) {
+      return {address: address, netmask: '255.255.255.0', family: 'IPv4', internal: false}
+    }
+
+    // Makes every later send of the socket end with this error, or work.
+    function sendsEndWith(error) {
+      socket.send.callsFake(function () {
+        process.nextTick([].slice.call(arguments).pop(), error)
+      })
+    }
+
+    function unreachable() {
+      var error = new Error('send EHOSTUNREACH 239.255.255.250:1900')
+
+      error.code = 'EHOSTUNREACH'
+
+      return error
+    }
+
+    // Searches, and waits until every socket has reported its send.
+    function search() {
+      client.search('ssdp:all')
+
+      return new Promise(function (resolve) { setImmediate(resolve) })
+    }
+
+    beforeEach(async function () {
+      this.sinon.stub(os, 'networkInterfaces').returns({
+        'en0': [ipv4('192.168.1.1')],
+        'en1': [ipv4('10.0.0.1')]
+      })
+
+      this.sinon.stub(process, 'emitWarning')
+
+      client = new Client()
+
+      await client.start()
+
+      socket = client.sockets['192.168.1.1']
+    })
+
+    afterEach(function () {
+      client.stop()
+    })
+
+    it('warns once, and names the interface', async function () {
+      sendsEndWith(unreachable())
+
+      await search()
+      await search()
+
+      assert(process.emitWarning.calledOnce)
+      assert.match(process.emitWarning.getCall(0).args[0], /en0 \(192\.168\.1\.1\).*EHOSTUNREACH/)
+      assert.equal(process.emitWarning.getCall(0).args[1].code, 'NODE_SSDP_SEND_FAILED')
+    })
+
+    it('warns again when the sends fail after one has worked', async function () {
+      sendsEndWith(unreachable())
+      await search()
+
+      sendsEndWith(undefined)
+      await search()
+
+      sendsEndWith(unreachable())
+      await search()
+
+      assert(process.emitWarning.calledTwice)
     })
   })
 })
