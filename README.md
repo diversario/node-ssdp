@@ -26,7 +26,9 @@ Check these points in your code and on your network:
   })
   ```
 
-- **`start()` can fail.** When a socket cannot be bound, `start()` rejects its promise and calls its callback with the error. In version 4 it never finished. It also fails when `stop()` is called before the start is done. Handle the error.
+- **`start()` can fail.** When a socket cannot be bound, `start()` rejects its promise and calls its callback with the error. In version 4 it never finished. It also fails when `stop()` is called before the start is done. Handle the error: give `start()` a callback, or handle its promise. When a failed start has neither, Node.js ends the process. Version 5.0.0 printed `Unhandled rejection` then, and the program kept running.
+
+- **`start()` and `stop()` return native promises.** In version 4 they returned Bluebird promises. Methods that only Bluebird has, for example `.tap()` and `.asCallback()`, are gone.
 
 - **A client uses UDP port 1900.** It listens there for NOTIFY messages and emits `advertise-alive` and `advertise-bye`. In version 4 a client with default options never got these events. A client cannot start when another program holds port 1900 and does not allow address reuse.
 
@@ -48,7 +50,7 @@ Check these points in your code and on your network:
 
 - **A warning tells when messages cannot leave through an interface.** When a search or an advertisement cannot be sent to the SSDP group through an interface, the library prints a warning that names the interface. The code of the warning is `NODE_SSDP_SEND_FAILED`. Devices on that network do not get the messages. In version 4 the error was only in the debug log. On macOS this happens when the program is not allowed to use the local network: see System Settings, Privacy & Security, Local Network.
 
-- **The `ip` module is not installed with this package anymore.** Add it to your own dependencies if your code uses it.
+- **The `ip`, `async`, `bluebird` and `extend` modules are not installed with this package anymore.** Add them to your own dependencies if your code uses them.
 
 ## Usage - Client
 

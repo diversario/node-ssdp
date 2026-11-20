@@ -31,6 +31,30 @@ describe('Client', function () {
         done()
       });
     });
+
+    it('gives the error of a failed start to the callback, and then the promise needs no handler', async function () {
+      this.sinon.stub(os, 'networkInterfaces').returns({})
+
+      var unhandled = this.sinon.stub()
+        , started = this.sinon.stub()
+
+      process.on('unhandledRejection', unhandled)
+
+      try {
+        client.start(started)
+
+        // Node.js reports a rejected promise that has no handler after the
+        // step in which it was rejected.
+        await new Promise(function (resolve) { setImmediate(resolve) })
+        await new Promise(function (resolve) { setImmediate(resolve) })
+
+        assert(started.calledOnce)
+        assert.match(started.getCall(0).args[0].message, /No sockets available/)
+        assert(unhandled.notCalled)
+      } finally {
+        process.removeListener('unhandledRejection', unhandled)
+      }
+    });
   });
 
 

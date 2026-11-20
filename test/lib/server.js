@@ -108,6 +108,47 @@ describe('Server', function () {
       });
     })
 
+    context('when the machine has no interface to use', function () {
+      var unhandled
+
+      beforeEach(function () {
+        this.sinon.stub(os, 'networkInterfaces').returns({})
+
+        unhandled = this.sinon.stub()
+
+        process.on('unhandledRejection', unhandled)
+      })
+
+      afterEach(function () {
+        process.removeListener('unhandledRejection', unhandled)
+      })
+
+      // Node.js reports a rejected promise that has no handler after the
+      // step in which it was rejected.
+      function nextStep() {
+        return new Promise(function (resolve) { setImmediate(resolve) })
+      }
+
+      it('rejects the promise', async function () {
+        var failure = await new Server().start().then(function () {}, function (e) { return e })
+
+        assert.match(failure.message, /No sockets available/)
+      })
+
+      it('gives the error to the callback, and then the promise needs no handler', async function () {
+        var started = this.sinon.stub()
+
+        new Server().start(started)
+
+        await nextStep()
+        await nextStep()
+
+        assert(started.calledOnce)
+        assert.match(started.getCall(0).args[0].message, /No sockets available/)
+        assert(unhandled.notCalled)
+      })
+    })
+
     it('joins the multicast group once on every interface', function () {
       // en0 has three addresses. Linux lists an address that has a label
       // under its own name.
@@ -401,6 +442,24 @@ describe('Server', function () {
       await server.stop()
 
       assert.equal(socket.close.callCount, 1)
+    })
+
+    it('calls its callback when the sockets are closed', function (done) {
+      var server = new Server()
+
+      server.start()
+
+      var listener = server._listener
+
+      server.stop(function (err) {
+        assert.equal(err, null)
+        assert(listener.close.calledOnce)
+
+        done()
+      })
+
+      // The byebye is not sent yet, so the socket must still be open.
+      assert(listener.close.notCalled)
     })
   })
 
