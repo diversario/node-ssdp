@@ -10,7 +10,7 @@
     "chromecast",
     "iot"
   ],
-  "version": "5.0.0",
+  "version": "6.0.0",
   "author": "Ilya Shaisultanov <github@diversario.com>",
   "dependencies": {
     "debug": "^4.4.3"
