@@ -196,18 +196,6 @@ describe('SSDP between processes on this machine', function () {
 
       assert.deepEqual(sources(await search(TYPE)), throughEveryInterface([udn + '::' + TYPE]))
     })
-
-    it('gets a response through the interface that the server names in its interfaces option', async function () {
-      const udn = newUdn()
-      const nic = externalIPv4().find((nic) => nic.address === addresses[0])
-      const server = await machine.server({ udn, interfaces: [nic.name], location: LOCATION }, [TYPE])
-      await server.start()
-
-      const responses = (await search(TYPE)).filter((response) => response.rinfo.address === nic.address)
-
-      assert.equal(responses.length, 1)
-      assert.equal(responses[0].headers.LOCATION, 'http://' + nic.address + ':8080/desc.xml')
-    })
   })
 
   context('when a server advertises', function () {
@@ -228,6 +216,27 @@ describe('SSDP between processes on this machine', function () {
       alives.forEach((alive) => {
         assert.equal(alive.headers.LOCATION, 'http://' + alive.rinfo.address + ':8080/desc.xml')
       })
+    })
+
+    it('sends ssdp:alive only through the interface that it names in its interfaces option', async function () {
+      // With one interface, a server that ignores the option sends the same.
+      if (addresses.length < 2) this.skip()
+
+      const udn = newUdn()
+      const nics = externalIPv4()
+      const name = nics.find((nic) => nic.address === addresses[0]).name
+      const named = nics.filter((nic) => nic.name === name && addresses.includes(nic.address)).map((nic) => nic.address)
+      const probe = await machine.probe()
+      const server = await machine.server({ udn, adInterval: 200, interfaces: [name] }, [TYPE])
+      await server.start()
+
+      await probe.waitFor('packet', isNotify('ssdp:alive'), 1500)
+      // Look at a few rounds of advertisements, not only at the first packet.
+      await probe.during('packet', 600)
+
+      const from = new Set(probe.events.filter(isNotify('ssdp:alive')).map((alive) => alive.rinfo.address))
+
+      assert.deepEqual([...from].sort(), named.sort())
     })
 
     it('sends ssdp:byebye through every interface when it stops', async function () {
