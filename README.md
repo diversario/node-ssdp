@@ -162,6 +162,7 @@ Alternatively, you can provide your own `customLogger` function, in which case t
 npm test            # unit tests, the network is faked
 npm run coverage    # unit tests with a coverage report
 make test-network   # network tests, needs podman or docker
+npm run test:local  # network tests on this machine, no container
 npm run lint        # ESLint, finds mistakes in the code
 ```
 
@@ -171,6 +172,8 @@ The network tests send real SSDP packets over multicast. They run in a container
 - `sh test/network/run.sh --grep byebye` passes arguments to mocha.
 
 `test/network/support/lab.js` describes how the virtual network is built.
+
+The local network tests also send real SSDP packets. They run servers and clients as separate processes on the machine itself, through its own network interfaces. CI runs them on Linux, macOS and Windows. They need one network interface that can send multicast, and one IPv4 address on every interface. On macOS, the program that starts them needs the Local Network permission.
 
 # License
 
