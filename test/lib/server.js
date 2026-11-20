@@ -825,6 +825,17 @@ describe('Server', function () {
   })
 
   context('when receiving an M-SEARCH message', function () {
+    // An M-SEARCH for one service type.
+    function searchFor(st) {
+      return [
+        'M-SEARCH * HTTP/1.1',
+        'HOST: 239.255.255.250:1900',
+        'ST: ' + st,
+        'MAN: "ssdp:discover"',
+        'MX: 3'
+      ].join('\r\n')
+    }
+
     context('with the MX delay', function () {
       var clock, server, socket
 
@@ -1186,6 +1197,18 @@ describe('Server', function () {
       assert(/\w+, \d+ \w+ \d+ [\d:]+ GMT/.test(dateHeader))
 
       done()
+    })
+
+    it('does not answer a search that comes from port 0', function () {
+      var server = new Server({mxDelay: false})
+
+      server.advertise = this.sinon.stub() // otherwise it'll call `send`
+
+      server.start()
+
+      server._listener.emit('message', searchFor('ssdp:all'), {address: localIp(), port: 0})
+
+      assert(server._listener.send.notCalled)
     })
   })
 })
