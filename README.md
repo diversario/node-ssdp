@@ -12,6 +12,22 @@ Requires Node.js 22.12 or newer.
 
 There is another package called `ssdp` which is the original unmaintained version. Make sure to install `node-ssdp` instead.
 
+## Upgrading from version 5
+
+Check these points in your code:
+
+- **`start()` and `stop()` return native promises.** In version 5 they returned Bluebird promises. Methods that only Bluebird has, for example `.tap()` and `.asCallback()`, are gone.
+
+- **A failed start that nothing handles ends the process.** Node.js does that for every promise. Give `start()` a callback, or handle its promise. In version 5 the program printed `Unhandled rejection` and kept running.
+
+- **`start()` gives every error to its callback.** In version 5 the callback was not called when the machine had no network interface to use. Only the promise got that error.
+
+- **With `allowWildcards`, only `*` has a special meaning in the type of a search.** In version 5 the type was read as a regular expression. A `.` stood for any character.
+
+- **A character above U+00FF in a header goes out as `?`.** In version 5 only its low byte went out.
+
+- **The `async`, `bluebird` and `extend` modules are not installed with this package anymore.** Add them to your own dependencies if your code uses them.
+
 ## Upgrading from version 4
 
 Version 5 needs Node.js 22.12 or newer.
@@ -26,9 +42,7 @@ Check these points in your code and on your network:
   })
   ```
 
-- **`start()` can fail.** When a socket cannot be bound, `start()` rejects its promise and calls its callback with the error. In version 4 it never finished. It also fails when `stop()` is called before the start is done. Handle the error: give `start()` a callback, or handle its promise. When a failed start has neither, Node.js ends the process. Version 5.0.0 printed `Unhandled rejection` then, and the program kept running.
-
-- **`start()` and `stop()` return native promises.** In version 4 they returned Bluebird promises. Methods that only Bluebird has, for example `.tap()` and `.asCallback()`, are gone.
+- **`start()` can fail.** When a socket cannot be bound, `start()` rejects its promise and calls its callback with the error. In version 4 it never finished. It also fails when `stop()` is called before the start is done. Handle the error.
 
 - **A client uses UDP port 1900.** It listens there for NOTIFY messages and emits `advertise-alive` and `advertise-bye`. In version 4 a client with default options never got these events. A client cannot start when another program holds port 1900 and does not allow address reuse.
 
@@ -50,7 +64,7 @@ Check these points in your code and on your network:
 
 - **A warning tells when messages cannot leave through an interface.** When a search or an advertisement cannot be sent to the SSDP group through an interface, the library prints a warning that names the interface. The code of the warning is `NODE_SSDP_SEND_FAILED`. Devices on that network do not get the messages. In version 4 the error was only in the debug log. On macOS this happens when the program is not allowed to use the local network: see System Settings, Privacy & Security, Local Network.
 
-- **The `ip`, `async`, `bluebird` and `extend` modules are not installed with this package anymore.** Add them to your own dependencies if your code uses them.
+- **The `ip` module is not installed with this package anymore.** Add it to your own dependencies if your code uses it.
 
 ## Usage - Client
 
