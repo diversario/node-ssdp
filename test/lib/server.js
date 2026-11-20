@@ -1360,6 +1360,9 @@ describe('Server', function () {
       assert(answered('192.168.1.77'))
       assert(answered('10.0.0.200'))
 
+      // the machine itself
+      assert(answered('127.0.0.1'))
+
       assert(!answered('192.168.2.77'))
       assert(!answered('203.0.113.7'))
     })
