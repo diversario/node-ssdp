@@ -18,7 +18,9 @@ Check these points in your code:
 
 - **`start()` and `stop()` return native promises.** In version 5 they returned Bluebird promises. Methods that only Bluebird has, for example `.tap()` and `.asCallback()`, are gone.
 
-- **A failed start that nothing handles ends the process.** Node.js does that for every promise. Give `start()` a callback, or handle its promise. In version 5 the program printed `Unhandled rejection` and kept running.
+- **A failed `start()` that nothing handles ends the process.** Node.js does that for every promise. Give `start()` a callback, or handle its promise. In version 5 the program printed `Unhandled rejection` and kept running.
+
+- **A search on a client that cannot start prints a warning.** `search()` starts a client that is not started. When that start fails, the search is not sent. The process keeps running. The code of the warning is `NODE_SSDP_START_FAILED`. In version 5 the program printed `Unhandled rejection`.
 
 - **`start()` gives every error to its callback.** In version 5 the callback was not called when the machine had no network interface to use. Only the promise got that error.
 

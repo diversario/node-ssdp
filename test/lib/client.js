@@ -55,6 +55,34 @@ describe('Client', function () {
         process.removeListener('unhandledRejection', unhandled)
       }
     });
+
+    it('warns when a search cannot start the client, and sends nothing', async function () {
+      this.sinon.stub(os, 'networkInterfaces').returns({})
+      this.sinon.stub(process, 'emitWarning')
+
+      var unhandled = this.sinon.stub()
+
+      process.on('unhandledRejection', unhandled)
+
+      try {
+        client.search('ssdp:all')
+
+        // Node.js reports a rejected promise that has no handler after the
+        // step in which it was rejected.
+        await new Promise(function (resolve) { setImmediate(resolve) })
+        await new Promise(function (resolve) { setImmediate(resolve) })
+
+        assert(!client.sockets)
+
+        assert(process.emitWarning.calledOnce)
+        assert.match(process.emitWarning.getCall(0).args[0], /The search is not sent.*No sockets available/)
+        assert.equal(process.emitWarning.getCall(0).args[1].code, 'NODE_SSDP_START_FAILED')
+
+        assert(unhandled.notCalled)
+      } finally {
+        process.removeListener('unhandledRejection', unhandled)
+      }
+    });
   });
 
 
