@@ -1276,5 +1276,33 @@ describe('Server', function () {
         assert(milliseconds < 200, 'took ' + milliseconds + ' ms')
       })
     })
+
+    it('with ignoreOtherSubnets it answers only a search from a subnet of its interfaces', function () {
+      this.sinon.stub(os, 'networkInterfaces').returns({
+        'en0': [ipv4('192.168.1.1')],
+        'en1': [ipv4('10.0.0.1')]
+      })
+
+      var server = new Server({ignoreOtherSubnets: true, mxDelay: false})
+
+      server.advertise = this.sinon.stub() // otherwise it'll call `send`
+
+      server.start()
+
+      var listener = server._listener
+
+      function answered(address) {
+        listener.send.resetHistory()
+        listener.emit('message', searchFor('ssdp:all'), {address: address, port: 2})
+
+        return listener.send.called
+      }
+
+      assert(answered('192.168.1.77'))
+      assert(answered('10.0.0.200'))
+
+      assert(!answered('192.168.2.77'))
+      assert(!answered('203.0.113.7'))
+    })
   })
 })

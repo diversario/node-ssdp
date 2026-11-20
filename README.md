@@ -135,6 +135,7 @@ const server = new Server({...})
 - `udn` _String_ Unique Device Name. Default: `uuid:f40c2981-7329-40b7-8b04-27f187aecfb5`.
 - `allowWildcards` _Boolean_ Accept wildcards (`*`) in `serviceTypes` of `M-SEARCH` packets, e.g. `usn:Belkin:device:**`. A `*` stands for any characters. Every other character stands for itself. Default: `false`
 - `mxDelay` _Boolean_ Wait a random time before answering an `M-SEARCH`, as UPnP recommends. The time is between 0 and the `MX` value of the search, in seconds, and 5 seconds at most. Default: `true`
+- `ignoreOtherSubnets` _Boolean_ Do not answer an `M-SEARCH` that comes from an address outside the subnets of the interfaces in use. An answer is many times larger than a search, and the source address of a search can be false. Without this option, a server whose UDP port 1900 can be reached from the internet can be used to flood another machine. The server reads the subnets when it starts. Default: `false`
 - `interfaces` _String[]_ List of interfaces to explicitly bind. By default, bind to all available interfaces.
 - `explicitSocketBind` _Boolean_ Bind the sending socket of each interface to the address of that interface. By default it is bound to all addresses.
 - `customLogger` _Function_ A logger function to use instead of the default. The first argument to the function can contain a format string.
