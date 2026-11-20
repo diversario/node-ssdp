@@ -9,11 +9,7 @@ test-network:
 coverage:
 	@npm run coverage
 
-coveralls: coverage
-	@cat coverage/lcov.info | ./node_modules/.bin/coveralls
-	@$(MAKE) clean
-
 clean:
 	@rm -rf coverage
 
-.PHONY: test test-network coverage coveralls clean
+.PHONY: test test-network coverage clean
