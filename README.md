@@ -173,7 +173,7 @@ The network tests send real SSDP packets over multicast. They run in a container
 
 `test/network/support/lab.js` describes how the virtual network is built.
 
-The local network tests also send real SSDP packets. They run servers and clients as separate processes on the machine itself, through its own network interfaces. CI runs them on Linux, macOS and Windows. They need one network interface that can send multicast.
+The local network tests also send real SSDP packets. They run servers and clients as separate processes on the machine itself, through its own network interfaces. CI runs them on Linux, macOS and Windows. They need one network interface that can send multicast. On macOS, the program that starts them needs the Local Network permission.
 
 # License
 

@@ -54,7 +54,14 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
-      - run: npm run test:local
+      # On a macOS runner, a program of the runner user cannot send
+      # multicast: the send fails with EHOSTUNREACH. macOS wants the user to
+      # allow local network access in a dialog, and nobody can answer a
+      # dialog on a runner. A program of root needs no permission.
+      - if: runner.os == 'macOS'
+        run: sudo env "PATH=$PATH" npm run test:local
+      - if: runner.os != 'macOS'
+        run: npm run test:local
 
   lint:
     name: lint
