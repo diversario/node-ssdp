@@ -10,11 +10,12 @@ permissions:
 
 jobs:
   unit:
-    name: unit tests, Node ${{ matrix.node }}
-    runs-on: ubuntu-latest
+    name: unit tests, ${{ matrix.os }}, Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         # 22.12.0 is the oldest version that package.json allows.
         node: ['22.12.0', '24', '26']
     steps:
