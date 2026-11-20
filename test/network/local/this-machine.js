@@ -10,6 +10,10 @@
 // through. So a client here gets one answer from a server through every
 // interface.
 //
+// The tests expect one IPv4 address on every network interface. With two
+// addresses on one interface, the library sends every message twice through
+// that interface.
+//
 // Other devices on the same network can answer too. The tests use their own
 // device types and UDNs, and look only at messages that carry such a UDN.
 
@@ -78,12 +82,7 @@ async function multicastAddresses () {
     try {
       await new Promise((resolve, reject) => sender.once('error', reject).bind(0, resolve))
 
-      try {
-        receiver.addMembership(GROUP, address)
-      } catch {
-        // A second address of an interface cannot join again. The first
-        // one has joined for the interface.
-      }
+      receiver.addMembership(GROUP, address)
 
       sender.setMulticastInterface(address)
 
@@ -119,6 +118,11 @@ describe('SSDP between processes on this machine', function () {
   }
 
   before(async function () {
+    const names = externalIPv4().map((nic) => nic.name.split(':')[0])
+    const twice = names.find((name, i) => names.indexOf(name) !== i)
+
+    assert.equal(twice, undefined, 'The network interface ' + twice + ' has more than one IPv4 address. These tests expect one on every interface.')
+
     addresses = await multicastAddresses()
 
     assert.notEqual(addresses.length, 0, 'This machine cannot send a multicast message to itself through any network interface.')
@@ -219,13 +223,15 @@ describe('SSDP between processes on this machine', function () {
     })
 
     it('sends ssdp:alive only through the interface that it names in its interfaces option', async function () {
-      // With one interface, a server that ignores the option sends the same.
-      if (addresses.length < 2) this.skip()
-
       const udn = newUdn()
       const nics = externalIPv4()
       const name = nics.find((nic) => nic.address === addresses[0]).name
       const named = nics.filter((nic) => nic.name === name && addresses.includes(nic.address)).map((nic) => nic.address)
+
+      // The option must leave out an interface. Else a server that ignores
+      // the option sends the same.
+      if (named.length === addresses.length) this.skip()
+
       const probe = await machine.probe()
       const server = await machine.server({ udn, adInterval: 200, interfaces: [name] }, [TYPE])
       await server.start()
