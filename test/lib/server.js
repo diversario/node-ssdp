@@ -1315,7 +1315,7 @@ describe('Server', function () {
       })
 
       it('reads every other character as itself', function () {
-        // As regular expressions, the first two are not valid, and the
+        // As regular expressions, the first two are not valid. The
         // others fit the USN.
         var types = ['(', '[', 'urn:Manufacturer:device:controllee:.', '.+', '\\w*', 'urn:Manufacturer:device:controllee:1|x']
 
